@@ -10,7 +10,7 @@ on:
       - 'scripts/**'
       - 'i18n/zh/templates/**'
       - '.github/workflows/**'
-      workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   release-zh:
