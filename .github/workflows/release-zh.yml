@@ -1,12 +1,16 @@
 name: 创建汉化版本发布
-# 职责说明：仅针对 i18n/zh-CN 下的所有内容进行打包发布，不参与或修改其他工作流或仓库文件。
+# 职责说明：仅针对 i18n/zh 下的所有内容进行打包发布，不参与或修改其他工作流或仓库文件。
 
 on:
   push:
     branches: [ main ]
     paths:
-      - 'i18n/zh-CN/**'
-  workflow_dispatch:
+      - 'i18n/zh/**'
+      - 'i18n/zh/memory/**'
+      - 'scripts/**'
+      - 'i18n/zh/templates/**'
+      - '.github/workflows/**'
+      workflow_dispatch:
 
 jobs:
   release-zh:

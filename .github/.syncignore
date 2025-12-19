@@ -11,6 +11,3 @@ i18n/
 # GitHub 工作流（避免同步上游的 CI/CD 配置）
 .github/workflows/
 
-# 可选：其他需要忽略的文件
-# README.zh-CN.md
-# docs/zh-CN/

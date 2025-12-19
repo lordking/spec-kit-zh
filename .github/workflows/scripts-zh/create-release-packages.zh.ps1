@@ -8,7 +8,7 @@
 .DESCRIPTION
     create-release-packages.zh.ps1 (workflow-local)
     为每个支持的AI助手和脚本类型构建Spec Kit模板发布存档。
-    从中文本地化模板读取（i18n/zh-CN/）。
+    从中文本地化模板读取（i18n/zh/）。
     
 .PARAMETER Version
     版本字符串，以'zh-v'开头（例如，zh-v0.2.0）
@@ -84,7 +84,7 @@ function Generate-Commands {
     New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
     
     # 从中文本地化模板读取
-    $templates = Get-ChildItem -Path "i18n/zh-CN/templates/commands/*.md" -File -ErrorAction SilentlyContinue
+    $templates = Get-ChildItem -Path "i18n/zh/templates/commands/*.md" -File -ErrorAction SilentlyContinue
     
     foreach ($template in $templates) {
         $name = [System.IO.Path]::GetFileNameWithoutExtension($template.Name)
@@ -222,9 +222,9 @@ function Build-Variant {
     New-Item -ItemType Directory -Path $specDir -Force | Out-Null
     
     # 从中文本地化复制内存目录
-    if (Test-Path "i18n/zh-CN/memory") {
-        Copy-Item -Path "i18n/zh-CN/memory" -Destination $specDir -Recurse -Force
-        Write-Host "已复制 i18n/zh-CN/memory -> .specify"
+    if (Test-Path "i18n/zh/memory") {
+        Copy-Item -Path "i18n/zh/memory" -Destination $specDir -Recurse -Force
+        Write-Host "已复制 i18n/zh/memory -> .specify"
     }
     
     # 仅复制相关的脚本变体目录
@@ -254,20 +254,20 @@ function Build-Variant {
     }
     
     # 从中文本地化复制模板（不含commands目录和vscode-settings.json）
-    if (Test-Path "i18n/zh-CN/templates") {
+    if (Test-Path "i18n/zh/templates") {
         $templatesDestDir = Join-Path $specDir "templates"
         New-Item -ItemType Directory -Path $templatesDestDir -Force | Out-Null
         
-        Get-ChildItem -Path "i18n/zh-CN/templates" -Recurse -File | Where-Object {
+        Get-ChildItem -Path "i18n/zh/templates" -Recurse -File | Where-Object {
             $_.FullName -notmatch 'templates[/\\]commands[/\\]' -and $_.Name -ne 'vscode-settings.json'
         } | ForEach-Object {
-            $relativePath = $_.FullName.Substring((Resolve-Path "i18n/zh-CN/templates").Path.Length + 1)
+            $relativePath = $_.FullName.Substring((Resolve-Path "i18n/zh/templates").Path.Length + 1)
             $destFile = Join-Path $templatesDestDir $relativePath
             $destFileDir = Split-Path $destFile -Parent
             New-Item -ItemType Directory -Path $destFileDir -Force | Out-Null
             Copy-Item -Path $_.FullName -Destination $destFile -Force
         }
-        Write-Host "已复制 i18n/zh-CN/templates -> .specify/templates"
+        Write-Host "已复制 i18n/zh/templates -> .specify/templates"
     }
     
     # 生成代理特定的命令文件
@@ -294,8 +294,8 @@ function Build-Variant {
             # 创建 VS Code 工作空间设置
             $vscodeDir = Join-Path $baseDir ".vscode"
             New-Item -ItemType Directory -Path $vscodeDir -Force | Out-Null
-            if (Test-Path "i18n/zh-CN/templates/vscode-settings.json") {
-                Copy-Item -Path "i18n/zh-CN/templates/vscode-settings.json" -Destination (Join-Path $vscodeDir "settings.json")
+            if (Test-Path "i18n/zh/templates/vscode-settings.json") {
+                Copy-Item -Path "i18n/zh/templates/vscode-settings.json" -Destination (Join-Path $vscodeDir "settings.json")
             }
         }
         'cursor-agent' {
@@ -356,7 +356,7 @@ function Build-Variant {
     }
     
     # 创建 zip 存档
-    $zipFile = Join-Path $GenReleasesDir "spec-kit-template-zh-${Agent}-${Script}-${Version}.zip"
+    $zipFile = Join-Path $GenReleasesDir "spec-kit-${Agent}-${Script}-${Version}.zip"
     Compress-Archive -Path "$baseDir/*" -DestinationPath $zipFile -Force
     Write-Host "已创建 $zipFile"
 }
@@ -425,6 +425,6 @@ foreach ($agent in $AgentList) {
 }
 
 Write-Host "`n${GenReleasesDir} 中的中文存档："
-Get-ChildItem -Path $GenReleasesDir -Filter "spec-kit-template-zh-*-${Version}.zip" | ForEach-Object {
+Get-ChildItem -Path $GenReleasesDir -Filter "spec-kit-template-*-${Version}.zip" | ForEach-Object {
     Write-Host "  $($_.Name)"
 }

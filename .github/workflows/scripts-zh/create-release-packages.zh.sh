@@ -40,7 +40,7 @@ rewrite_paths() {
 generate_commands() {
   local agent=$1 ext=$2 arg_format=$3 output_dir=$4 script_variant=$5
   mkdir -p "$output_dir"
-  for template in i18n/zh-CN/templates/commands/*.md; do
+  for template in i18n/zh/templates/commands/*.md; do
     [[ -f "$template" ]] || continue
     local name description script_command agent_script_command body file_content
     name=$(basename "$template" .md)
@@ -131,7 +131,7 @@ build_variant() {
   SPEC_DIR="$base_dir/.specify"
   mkdir -p "$SPEC_DIR"
 
-  [[ -d i18n/zh-CN/memory ]] && { cp -r i18n/zh-CN/memory "$SPEC_DIR/"; echo "已复制 i18n/zh-CN/memory -> .specify"; }
+  [[ -d i18n/zh/memory ]] && { cp -r i18n/zh/memory "$SPEC_DIR/"; echo "已复制 i18n/zh/memory -> .specify"; }
 
   # 仅复制相关脚本目录 + 根级脚本文件
   if [[ -d scripts ]]; then
@@ -150,21 +150,21 @@ build_variant() {
     esac
   fi
 
-  [[ -d i18n/zh-CN/templates ]] && {
+  [[ -d i18n/zh/templates ]] && {
     mkdir -p "$SPEC_DIR/templates"
       # 按 PowerShell 实现对齐：保留 templates 下的相对路径，排除 commands 与 vscode-settings.json
-      # 仅复制 i18n/zh-CN/templates 下的常规文件，排除 commands、VSCode 设置及任何隐藏目录（如 .genreleases-zh）
+      # 仅复制 i18n/zh/templates 下的常规文件，排除 commands、VSCode 设置及任何隐藏目录（如 .genreleases-zh）
       while IFS= read -r src; do
-        rel=${src#i18n/zh-CN/templates/}
+        rel=${src#i18n/zh/templates/}
         dest="$SPEC_DIR/templates/$rel"
         mkdir -p "$(dirname "$dest")"
         cp "$src" "$dest"
-      done < <(find i18n/zh-CN/templates -type f \
-                    -not -path "i18n/zh-CN/templates/commands/*" \
+      done < <(find i18n/zh/templates -type f \
+                    -not -path "i18n/zh/templates/commands/*" \
                     -not -name "vscode-settings.json" \
-                    -not -path "i18n/zh-CN/templates/.*" \
-                    -not -path "i18n/zh-CN/templates/.*/**")
-      echo "已复制 i18n/zh-CN/templates -> .specify/templates"
+                    -not -path "i18n/zh/templates/.*" \
+                    -not -path "i18n/zh/templates/.*/**")
+      echo "已复制 i18n/zh/templates -> .specify/templates"
   }
 
   # 占位符约定同英文版：
@@ -187,7 +187,7 @@ build_variant() {
       generate_copilot_prompts "$base_dir/.github/agents" "$base_dir/.github/prompts"
       # 创建 VSCode 公主裙的设置文件
       mkdir -p "$base_dir/.vscode"
-      [[ -f i18n/zh-CN/templates/vscode-settings.json ]] && cp i18n/zh-CN/templates/vscode-settings.json "$base_dir/.vscode/settings.json" 
+      [[ -f i18n/zh/templates/vscode-settings.json ]] && cp i18n/zh/templates/vscode-settings.json "$base_dir/.vscode/settings.json" 
       ;;
     cursor-agent)
       mkdir -p "$base_dir/.cursor/commands"
@@ -233,8 +233,8 @@ build_variant() {
       mkdir -p "$base_dir/.bob/commands"
       generate_commands bob md "\$ARGUMENTS" "$base_dir/.bob/commands" "$script" ;;
   esac
-  ( cd "$base_dir" && zip -r "../spec-kit-template-zh-${agent}-${script}-${NEW_VERSION}.zip" . )
-  echo "已创建 $GENRELEASES_DIR/spec-kit-template-zh-${agent}-${script}-${NEW_VERSION}.zip"
+  ( cd "$base_dir" && zip -r "../spec-kit-template-${agent}-${script}-${NEW_VERSION}.zip" . )
+  echo "已创建 $GENRELEASES_DIR/spec-kit-template-${agent}-${script}-${NEW_VERSION}.zip"
 }
 
 # 确定代理列表
@@ -284,4 +284,4 @@ for agent in "${AGENT_LIST[@]}"; do
 done
 
 echo "${GENRELEASES_DIR} 中的中文存档："
-ls -1 "$GENRELEASES_DIR"/spec-kit-template-zh-*"-${NEW_VERSION}".zip
+ls -1 "$GENRELEASES_DIR"/spec-kit-template-*"-${NEW_VERSION}".zip

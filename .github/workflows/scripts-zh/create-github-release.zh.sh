@@ -15,7 +15,7 @@ VERSION="$1"
 # 去掉前缀 zh-v 作为标题展示
 VERSION_NO_V=${VERSION#zh-v}
 
-# 中文产物目录与命名约定：.genreleases-zh/spec-kit-template-zh-<agent>-<script>-<version>.zip
+# 中文产物目录与命名约定：.genreleases-zh/spec-kit-template-<agent>-<script>-<version>.zip
 GEN_DIR=".genreleases-zh"
 
 if [[ ! -d "$GEN_DIR" ]]; then
@@ -25,11 +25,11 @@ fi
 
 # 收集所有匹配当前版本的 zip 产物
 shopt -s nullglob
-files=("$GEN_DIR"/spec-kit-template-zh-*-"$VERSION".zip)
+files=("$GEN_DIR"/spec-kit-template-*-"$VERSION".zip)
 shopt -u nullglob
 
 if [[ ${#files[@]} -eq 0 ]]; then
-  echo "错误: 未找到任何中文发布包 ($GEN_DIR/spec-kit-template-zh-*-$VERSION.zip)。" >&2
+  echo "错误: 未找到任何中文发布包 ($GEN_DIR/spec-kit-template-*-$VERSION.zip)。" >&2
   ls -la "$GEN_DIR" || true
   exit 1
 fi
