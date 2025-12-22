@@ -3,13 +3,12 @@ name: 创建汉化版本发布
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'i18n/zh/**'
-      - 'i18n/zh/memory/**'
-      - 'scripts/**'
-      - 'i18n/zh/templates/**'
-      - '.github/workflows/**'
+      - "i18n/zh/memory/**"
+      - "i18n/zh/scripts/**"
+      - "i18n/zh/templates/**"
+      - ".github/workflows/**"
   workflow_dispatch:
 
 jobs:
