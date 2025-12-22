@@ -228,21 +228,21 @@ function Build-Variant {
     }
     
     # 仅复制相关的脚本变体目录
-    if (Test-Path "scripts") {
+    if (Test-Path "i18n/zh/scripts") {
         $scriptsDestDir = Join-Path $specDir "scripts"
         New-Item -ItemType Directory -Path $scriptsDestDir -Force | Out-Null
         
         switch ($Script) {
             'sh' {
-                if (Test-Path "scripts/bash") {
-                    Copy-Item -Path "scripts/bash" -Destination $scriptsDestDir -Recurse -Force
-                    Write-Host "已复制 scripts/bash -> .specify/scripts"
+                if (Test-Path "i18n/zh/scripts/bash") {
+                    Copy-Item -Path "i18n/zh/scripts/bash" -Destination $scriptsDestDir -Recurse -Force
+                    Write-Host "已复制 i18n/zh/scripts/bash -> .specify/scripts"
                 }
             }
             'ps' {
-                if (Test-Path "scripts/powershell") {
-                    Copy-Item -Path "scripts/powershell" -Destination $scriptsDestDir -Recurse -Force
-                    Write-Host "已复制 scripts/powershell -> .specify/scripts"
+                if (Test-Path "i18n/zh/scripts/powershell") {
+                    Copy-Item -Path "i18n/zh/scripts/powershell" -Destination $scriptsDestDir -Recurse -Force
+                    Write-Host "已复制 i18n/zh/scripts/powershell -> .specify/scripts"
                 }
             }
         }
