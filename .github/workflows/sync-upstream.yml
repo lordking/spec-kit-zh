@@ -116,7 +116,7 @@ jobs:
         run: |
           mkdir -p sync-report
           git log --oneline --decorate --graph --left-right --cherry-pick --no-merges HEAD...upstream/main > sync-report/commits.txt
-          
+
           # 构建 git 排除路径参数
           EXCLUDE_ARGS=""
           if [ -f .github/.syncignore ]; then
@@ -126,7 +126,7 @@ jobs:
               EXCLUDE_ARGS="$EXCLUDE_ARGS ':!${pattern}'"
             done < .github/.syncignore
           fi
-          
+
           # 生成差异报告（应用忽略清单）
           if [ -n "$EXCLUDE_ARGS" ]; then
             eval git diff HEAD upstream/main -- . $EXCLUDE_ARGS > sync-report/full.diff
