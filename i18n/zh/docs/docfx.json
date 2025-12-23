@@ -1,0 +1,71 @@
+{
+  "build": {
+    "content": [
+      {
+        "files": [
+          "*.md",
+          "toc.yml"
+        ]
+      },
+      {
+        "files": [
+          "../README.md",
+          "../CONTRIBUTING.md",
+          "../CODE_OF_CONDUCT.md",
+          "../SECURITY.md",
+          "../SUPPORT.md"
+        ],
+        "dest": "."
+      }
+    ],
+    "resource": [
+      {
+        "files": [
+          "images/**"
+        ]
+      },
+      {
+        "files": [
+          "../media/**"
+        ],
+        "dest": "media"
+      }
+    ],
+    "overwrite": [
+      {
+        "files": [
+          "apidoc/**.md"
+        ],
+        "exclude": [
+          "obj/**",
+          "_site/**"
+        ]
+      }
+    ],
+    "dest": "_site",
+    "globalMetadataFiles": [],
+    "fileMetadataFiles": [],
+    "template": [
+      "default",
+      "modern"
+    ],
+    "postProcessors": [],
+    "markdownEngineName": "markdig",
+    "noLangKeyword": false,
+    "keepFileLink": false,
+    "cleanupCacheHistory": false,
+    "disableGitFeatures": false,
+    "globalMetadata": {
+      "_appTitle": "Spec Kit 文档",
+      "_appName": "Spec Kit",
+      "_appFooter": "Spec Kit 中文版 - 规格驱动开发中文版工具包",
+      "_enableSearch": true,
+      "_disableContribution": false,
+      "_gitContribute": {
+        "repo": "https://github.com/lordking/spec-kit-zh",
+        "branch": "main"
+      }
+    }
+  }
+}
+
