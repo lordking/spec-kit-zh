@@ -43,7 +43,7 @@ jobs:
 
       - name: 使用 DocFX 构建文档
         run: |
-          cd docs
+          cd i18n/zh/docs
           docfx docfx.json
 
       - name: 设置 Pages
@@ -52,7 +52,7 @@ jobs:
       - name: 上传构建产物
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "docs/_site"
+          path: "i18n/zh/docs/_site"
 
   # 部署作业
   deploy:
