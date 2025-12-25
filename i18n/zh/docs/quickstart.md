@@ -39,7 +39,7 @@ uvx --from git+https://github.com/lordking/spec-kit-zh.git specify init <PROJECT
 
 ### 步骤3：创建规格
 
-**在聊天中**，使用`/speckit.specify`斜杠命令描述你想要构建的内容。专注于**什么**和**为什么**，而不是技术栈。
+**在聊天界面中**，使用`/speckit.specify`斜杠命令描述你想要构建的内容。专注于**是什么**和**为什么**，而不是技术栈。
 
 ```markdown
 /speckit.specify 构建一个应用程序，帮助我将照片整理到不同的相册中。相册按日期分组，并且可以在主页面通过拖放操作重新排列。相册不会存在于其他嵌套的相册中。在每个相册中，照片以拼图式界面进行预览。
@@ -47,7 +47,7 @@ uvx --from git+https://github.com/lordking/spec-kit-zh.git specify init <PROJECT
 
 ### 步骤4：完善规格
 
-**在聊天中**，使用`/speckit.clarify`斜杠命令识别并解决规格中的歧义。你可以提供特定的重点领域作为参数。
+**在聊天界面中**，使用`/speckit.clarify`斜杠命令识别并解决规格中的歧义。你可以提供特定的重点领域作为参数。
 
 ```bash
 /speckit.clarify 关注安全和性能要求。
@@ -55,15 +55,15 @@ uvx --from git+https://github.com/lordking/spec-kit-zh.git specify init <PROJECT
 
 ### 步骤5：创建技术实施计划
 
-**在聊天中**，使用`/speckit.plan`斜杠命令提供你的技术栈和架构选择。
+**在聊天界面中**，使用`/speckit.plan`斜杠命令提供你的技术栈和架构选择。
 
 ```markdown
-/speckit.plan 该应用使用Vite，尽量减少库的数量。尽可能使用原生HTML、CSS和JavaScript。图片不会上传到任何地方，元数据存储在本地SQLite数据库中。
+/speckit.plan 该应用使用Vite，尽量减少库的数量，使用原生HTML、CSS和JavaScript。图片不会上传到任何地方，元数据存储在本地SQLite数据库中。
 ```
 
 ### 步骤6：分解并实施
 
-**在聊天中**，使用`/speckit.tasks`斜杠命令创建可执行任务列表。
+**在聊天界面中**，使用`/speckit.tasks`斜杠命令创建可执行任务列表。
 
 ```markdown
 /speckit.tasks
