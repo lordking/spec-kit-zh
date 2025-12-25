@@ -118,8 +118,8 @@ find_feature_dir_by_prefix() {
         echo "$specs_dir/${matches[0]}"
     else
         # 多个匹配 - 这不应该发生（正常命名会会变）
-        echo "错误: 找到多个具有前缀 '$prefix' 的规范目录: ${matches[*]}" >&2
-        echo "请确保每个数字前缀仅存在一个规范目录。" >&2
+        echo "错误: 找到多个具有前缀 '$prefix' 的规格目录: ${matches[*]}" >&2
+        echo "请确保每个数字前缀仅存在一个规格目录。" >&2
         echo "$specs_dir/$branch_name"  # 返回一些不会空並断脚本的值
     fi
 }
@@ -133,7 +133,7 @@ get_feature_paths() {
         has_git_repo="true"
     fi
 
-    # Use prefix-based lookup to support multiple branches per spec
+    # 使用基于前缀的查找以支持每个规格的多个分支
     local feature_dir=$(find_feature_dir_by_prefix "$repo_root" "$current_branch")
 
     cat <<EOF

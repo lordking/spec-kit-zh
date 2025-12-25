@@ -2,7 +2,7 @@
 
 # 上上下下更新计划文件中的信息
 #
-# 此脚本中维护 AI 代理上下文文件，做法是解析特征规范
+# 此脚本中维护 AI 代理上下文文件，做法是解析特征规格
 # 并使用项目信息更新代理特定的配置文件。
 #
 # 主要函数:
@@ -14,7 +14,7 @@
 # 2. 计划数据提取
 #    - 解析 plan.md 文件以提取项目元数据
 #    - 识别语言/版本、框架、数据库、项目类型
-#    - 优雅地处理缺失或不完整的规范数据
+#    - 优雅地处理缺失或不完整的规格数据
 #
 # 3. 代理文件管理
 #    - 从模板中创建新的代理上下文文件
@@ -39,13 +39,13 @@ set -o pipefail
 SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
-# Get all paths and variables from common functions
+# 从常用函数中获取所有路径和变量
 eval $(get_feature_paths)
 
 NEW_PLAN="$IMPL_PLAN"  # Alias for compatibility with existing code
 AGENT_TYPE="${1:-}"
 
-# Agent-specific file paths  
+# 代理特定的文件路径
 CLAUDE_FILE="$REPO_ROOT/CLAUDE.md"
 GEMINI_FILE="$REPO_ROOT/GEMINI.md"
 COPILOT_FILE="$REPO_ROOT/.github/agents/copilot-instructions.md"
