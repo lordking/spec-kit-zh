@@ -134,18 +134,18 @@ build_variant() {
   [[ -d i18n/zh/memory ]] && { cp -r i18n/zh/memory "$SPEC_DIR/"; echo "已复制 i18n/zh/memory -> .specify"; }
 
   # 仅复制相关脚本目录 + 根级脚本文件
-  if [[ -d scripts ]]; then
+  if [[ -d i18n/zh/scripts ]]; then
     mkdir -p "$SPEC_DIR/scripts"
     case $script in
       sh)
-        [[ -d scripts/bash ]] && { cp -r scripts/bash "$SPEC_DIR/scripts/"; echo "已复制 scripts/bash -> .specify/scripts"; }
+        [[ -d i18n/zh/scripts/bash ]] && { cp -r i18n/zh/scripts/bash "$SPEC_DIR/scripts/"; echo "已复制 i18n/zh/scripts/bash -> .specify/scripts"; }
         # 复制任何不在特定变体目录中的脚本文件
-        find scripts -maxdepth 1 -type f -exec cp {} "$SPEC_DIR/scripts/" \; 2>/dev/null || true 
+        find i18n/zh/scripts -maxdepth 1 -type f -exec cp {} "$SPEC_DIR/scripts/" \; 2>/dev/null || true 
         ;;
       ps)
-        [[ -d scripts/powershell ]] && { cp -r scripts/powershell "$SPEC_DIR/scripts/"; echo "已复制 scripts/powershell -> .specify/scripts"; }
+        [[ -d i18n/zh/scripts/powershell ]] && { cp -r i18n/zh/scripts/powershell "$SPEC_DIR/scripts/"; echo "已复制 i18n/zh/scripts/powershell -> .specify/scripts"; }
         # 复制任何不在特定变体目录中的脚本文件
-        find scripts -maxdepth 1 -type f -exec cp {} "$SPEC_DIR/scripts/" \; 2>/dev/null || true 
+        find i18n/zh/scripts -maxdepth 1 -type f -exec cp {} "$SPEC_DIR/scripts/" \; 2>/dev/null || true 
         ;;
     esac
   fi

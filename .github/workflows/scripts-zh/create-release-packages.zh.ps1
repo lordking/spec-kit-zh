@@ -248,7 +248,7 @@ function Build-Variant {
         }
         
         # 复制不在变体特定目录中的任何脚本文件
-        Get-ChildItem -Path "scripts" -File -ErrorAction SilentlyContinue | ForEach-Object {
+        Get-ChildItem -Path "i18n/zh/scripts" -File -ErrorAction SilentlyContinue | ForEach-Object {
             Copy-Item -Path $_.FullName -Destination $scriptsDestDir -Force
         }
     }
