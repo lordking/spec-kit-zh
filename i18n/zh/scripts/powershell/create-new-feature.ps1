@@ -22,7 +22,7 @@ if ($Help) {
     Write-Host "  -Help               显示此帮助信息"
     Write-Host ""
     Write-Host "示例:"
-    Write-Host "  ./create-new-feature.ps1 '添加用户认证系统' -ShortName 'user-auth'"
+    Write-Host "  ./create-new-feature.ps1 '添加用户认证系统' -ShortName '用户认证'"
     Write-Host "  ./create-new-feature.ps1 '通过 API 集成 OAuth2'"
     exit 0
 }

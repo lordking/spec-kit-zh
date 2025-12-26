@@ -109,7 +109,7 @@ function Validate-Environment {
     }
     if (-not (Test-Path $NEW_PLAN)) {
         Write-Err "在 $NEW_PLAN 找不到 plan.md"
-        Write-Info '确保您正在处理具有相应规范目录的功能'
+        Write-Info '确保您正在处理具有相应规格目录的功能'
         if (-not $HAS_GIT) { Write-Info '使用: $env:SPECIFY_FEATURE=your-feature-name 或首先创建新功能' }
         exit 1
     }
@@ -236,14 +236,14 @@ function New-AgentFile {
     }
     
     $content = $content -replace '\[EXTRACTED FROM ALL PLAN.MD FILES\]',$techStackForTemplate
-    # For project structure we manually embed (keep newlines)
+    # 对于项目结构，我们手动嵌入（保留换行符）
     $escapedStructure = [Regex]::Escape($projectStructure)
     $content = $content -replace '\[ACTUAL STRUCTURE FROM PLANS\]',$escapedStructure
     # Replace escaped newlines placeholder after all replacements
     $content = $content -replace '\[ONLY COMMANDS FOR ACTIVE TECHNOLOGIES\]',$commands
     $content = $content -replace '\[LANGUAGE-SPECIFIC, ONLY FOR LANGUAGES IN USE\]',$languageConventions
     
-    # Build the recent changes string safely
+    # 为最近的变更字符串构建安全的内容
     $recentChangesForTemplate = ""
     if ($escaped_lang -and $escaped_framework) {
         $recentChangesForTemplate = "- ${escaped_branch}: Added ${escaped_lang} + ${escaped_framework}"
@@ -254,7 +254,7 @@ function New-AgentFile {
     }
     
     $content = $content -replace '\[LAST 3 FEATURES AND WHAT THEY ADDED\]',$recentChangesForTemplate
-    # Convert literal \n sequences introduced by Escape to real newlines
+    # 由转义引入的文字 \n 序列转换为实际换行符
     $content = $content -replace '\\n',[Environment]::NewLine
 
     $parent = Split-Path -Parent $TargetFile
@@ -328,7 +328,7 @@ function Update-ExistingAgentFile {
         $output.Add($line)
     }
 
-    # Post-loop check: if we're still in the Active Technologies section and haven't added new entries
+    # 循环后检查：如果我们仍在“活跃技术”部分且尚未添加新条目
     if ($inTech -and -not $techAdded -and $newTechEntries.Count -gt 0) {
         $newTechEntries | ForEach-Object { $output.Add($_) }
     }
