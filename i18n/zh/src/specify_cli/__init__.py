@@ -435,7 +435,7 @@ class BannerGroup(TyperGroup):
 
 app = typer.Typer(
     name="specify",
-    help="Specify 规范驱动开发项目的配置工具",
+    help="Specify 规格驱动开发的项目配置工具",
     add_completion=False,
     invoke_without_command=True,
     cls=BannerGroup,
