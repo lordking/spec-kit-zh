@@ -10,14 +10,14 @@
 # ]
 # ///
 """
-Specify CLI - Setup tool for Specify projects
+Specify CLI - Specify 项目的设置工具
 
-Usage:
+用法:
     uvx specify-cli.py init <project-name>
     uvx specify-cli.py init .
     uvx specify-cli.py init --here
 
-Or install globally:
+或全局安装:
     uv tool install --from specify-cli.py specify-cli
     specify init <project-name>
     specify init .
@@ -47,7 +47,7 @@ from rich.table import Table
 from rich.tree import Tree
 from typer.core import TyperGroup
 
-# For cross-platform keyboard input
+# 跨平台键盘输入
 import readchar
 import ssl
 import truststore
@@ -57,19 +57,19 @@ ssl_context = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 client = httpx.Client(verify=ssl_context)
 
 def _github_token(cli_token: str | None = None) -> str | None:
-    """Return sanitized GitHub token (cli arg takes precedence) or None."""
+    """返回已清理的 GitHub token(命令行参数优先)或 None。"""
     return ((cli_token or os.getenv("GH_TOKEN") or os.getenv("GITHUB_TOKEN") or "").strip()) or None
 
 def _github_auth_headers(cli_token: str | None = None) -> dict:
-    """Return Authorization header dict only when a non-empty token exists."""
+    """仅在存在非空 token 时返回 Authorization 头部字典。"""
     token = _github_token(cli_token)
     return {"Authorization": f"Bearer {token}"} if token else {}
 
 def _parse_rate_limit_headers(headers: httpx.Headers) -> dict:
-    """Extract and parse GitHub rate-limit headers."""
+    """提取并解析 GitHub 速率限制头部。"""
     info = {}
     
-    # Standard GitHub rate-limit headers
+    # 标准 GitHub 速率限制头部
     if "X-RateLimit-Limit" in headers:
         info["limit"] = headers.get("X-RateLimit-Limit")
     if "X-RateLimit-Remaining" in headers:
@@ -82,52 +82,52 @@ def _parse_rate_limit_headers(headers: httpx.Headers) -> dict:
             info["reset_time"] = reset_time
             info["reset_local"] = reset_time.astimezone()
     
-    # Retry-After header (seconds or HTTP-date)
+    # Retry-After 头部(秒数或 HTTP 日期)
     if "Retry-After" in headers:
         retry_after = headers.get("Retry-After")
         try:
             info["retry_after_seconds"] = int(retry_after)
         except ValueError:
-            # HTTP-date format - not implemented, just store as string
+            # HTTP 日期格式 - 未实现，仅存储为字符串
             info["retry_after"] = retry_after
     
     return info
 
 def _format_rate_limit_error(status_code: int, headers: httpx.Headers, url: str) -> str:
-    """Format a user-friendly error message with rate-limit information."""
+    """格式化带有速率限制信息的用户友好错误消息。"""
     rate_info = _parse_rate_limit_headers(headers)
     
-    lines = [f"GitHub API returned status {status_code} for {url}"]
+    lines = [f"GitHub API 返回状态码 {status_code},请求 URL: {url}"]
     lines.append("")
     
     if rate_info:
-        lines.append("[bold]Rate Limit Information:[/bold]")
+        lines.append("[bold]速率限制信息:[/bold]")
         if "limit" in rate_info:
-            lines.append(f"  • Rate Limit: {rate_info['limit']} requests/hour")
+            lines.append(f"  • 速率限制: {rate_info['limit']} 请求/小时")
         if "remaining" in rate_info:
-            lines.append(f"  • Remaining: {rate_info['remaining']}")
+            lines.append(f"  • 剩余请求: {rate_info['remaining']}")
         if "reset_local" in rate_info:
             reset_str = rate_info["reset_local"].strftime("%Y-%m-%d %H:%M:%S %Z")
-            lines.append(f"  • Resets at: {reset_str}")
+            lines.append(f"  • 重置时间: {reset_str}")
         if "retry_after_seconds" in rate_info:
-            lines.append(f"  • Retry after: {rate_info['retry_after_seconds']} seconds")
+            lines.append(f"  • 重试等待: {rate_info['retry_after_seconds']} 秒")
         lines.append("")
     
-    # Add troubleshooting guidance
-    lines.append("[bold]Troubleshooting Tips:[/bold]")
-    lines.append("  • If you're on a shared CI or corporate environment, you may be rate-limited.")
-    lines.append("  • Consider using a GitHub token via --github-token or the GH_TOKEN/GITHUB_TOKEN")
-    lines.append("    environment variable to increase rate limits.")
-    lines.append("  • Authenticated requests have a limit of 5,000/hour vs 60/hour for unauthenticated.")
+    # 添加故障排除指南
+    lines.append("[bold]故障排除提示:[/bold]")
+    lines.append("  • 如果您在共享 CI 或企业环境中,可能会遇到速率限制。")
+    lines.append("  • 考虑通过 --github-token 或 GH_TOKEN/GITHUB_TOKEN 环境变量")
+    lines.append("    使用 GitHub token 以提高速率限制。")
+    lines.append("  • 已认证请求的限制为 5,000/小时,未认证请求为 60/小时。")
     
     return "\n".join(lines)
 
-# Agent configuration with name, folder, install URL, and CLI tool requirement
+# AI 智能体配置，包括名称、文件夹、安装 URL 和 CLI 工具要求
 AGENT_CONFIG = {
     "copilot": {
         "name": "GitHub Copilot",
         "folder": ".github/",
-        "install_url": None,  # IDE-based, no CLI check needed
+        "install_url": None,  # 基于 IDE，无需 CLI 检查
         "requires_cli": False,
     },
     "claude": {
@@ -145,7 +145,7 @@ AGENT_CONFIG = {
     "cursor-agent": {
         "name": "Cursor",
         "folder": ".cursor/",
-        "install_url": None,  # IDE-based
+        "install_url": None,  # 基于 IDE
         "requires_cli": False,
     },
     "qwen": {
@@ -169,13 +169,13 @@ AGENT_CONFIG = {
     "windsurf": {
         "name": "Windsurf",
         "folder": ".windsurf/",
-        "install_url": None,  # IDE-based
+        "install_url": None,  # 基于 IDE
         "requires_cli": False,
     },
     "kilocode": {
         "name": "Kilo Code",
         "folder": ".kilocode/",
-        "install_url": None,  # IDE-based
+        "install_url": None,  # 基于 IDE
         "requires_cli": False,
     },
     "auggie": {
@@ -199,7 +199,7 @@ AGENT_CONFIG = {
     "roo": {
         "name": "Roo Code",
         "folder": ".roo/",
-        "install_url": None,  # IDE-based
+        "install_url": None,  # 基于 IDE
         "requires_cli": False,
     },
     "q": {
@@ -223,7 +223,7 @@ AGENT_CONFIG = {
     "bob": {
         "name": "IBM Bob",
         "folder": ".bob/",
-        "install_url": None,  # IDE-based
+        "install_url": None,  # 基于 IDE
         "requires_cli": False,
     },
 }
@@ -243,14 +243,14 @@ BANNER = """
 
 TAGLINE = "GitHub Spec Kit - Spec-Driven Development Toolkit"
 class StepTracker:
-    """Track and render hierarchical steps without emojis, similar to Claude Code tree output.
-    Supports live auto-refresh via an attached refresh callback.
+    """跟踪和渲染分层步骤(无表情符号),类似于 Claude Code 树形输出。
+    通过附加的刷新回调支持实时自动刷新。
     """
     def __init__(self, title: str):
         self.title = title
-        self.steps = []  # list of dicts: {key, label, status, detail}
+        self.steps = []  # 字典列表: {key, label, status, detail}
         self.status_order = {"pending": 0, "running": 1, "done": 2, "error": 3, "skipped": 4}
-        self._refresh_cb = None  # callable to trigger UI refresh
+        self._refresh_cb = None  # 可调用对象,用于触发 UI 刷新
 
     def attach_refresh(self, cb):
         self._refresh_cb = cb
@@ -312,13 +312,13 @@ class StepTracker:
                 symbol = " "
 
             if status == "pending":
-                # Entire line light gray (pending)
+                # 整行浅灰色(待处理)
                 if detail_text:
                     line = f"{symbol} [bright_black]{label} ({detail_text})[/bright_black]"
                 else:
                     line = f"{symbol} [bright_black]{label}[/bright_black]"
             else:
-                # Label white, detail (if any) light gray in parentheses
+                # 标签白色,详情(如有)用括号括起来并显示为浅灰色
                 if detail_text:
                     line = f"{symbol} [white]{label}[/white] [bright_black]({detail_text})[/bright_black]"
                 else:
@@ -328,7 +328,7 @@ class StepTracker:
         return tree
 
 def get_key():
-    """Get a single keypress in a cross-platform way using readchar."""
+    """使用 readchar 以跨平台方式获取单个按键。"""
     key = readchar.readkey()
 
     if key == readchar.key.UP or key == readchar.key.CTRL_P:
@@ -347,17 +347,17 @@ def get_key():
 
     return key
 
-def select_with_arrows(options: dict, prompt_text: str = "Select an option", default_key: str = None) -> str:
+def select_with_arrows(options: dict, prompt_text: str = "选择一个选项", default_key: str = None) -> str:
     """
-    Interactive selection using arrow keys with Rich Live display.
+    使用箭头键通过 Rich Live 显示进行交互式选择。
     
     Args:
-        options: Dict with keys as option keys and values as descriptions
-        prompt_text: Text to show above the options
-        default_key: Default option key to start with
+        options: 字典,键为选项键,值为描述
+        prompt_text: 在选项上方显示的文本
+        default_key: 开始时的默认选项键
         
     Returns:
-        Selected option key
+        所选选项键
     """
     option_keys = list(options.keys())
     if default_key and default_key in option_keys:
@@ -368,7 +368,7 @@ def select_with_arrows(options: dict, prompt_text: str = "Select an option", def
     selected_key = None
 
     def create_selection_panel():
-        """Create the selection panel with current selection highlighted."""
+        """创建选择面板，突出显示当前选择。"""
         table = Table.grid(padding=(0, 2))
         table.add_column(style="cyan", justify="left", width=3)
         table.add_column(style="white", justify="left")
@@ -380,7 +380,7 @@ def select_with_arrows(options: dict, prompt_text: str = "Select an option", def
                 table.add_row(" ", f"[cyan]{key}[/cyan] [dim]({options[key]})[/dim]")
 
         table.add_row("", "")
-        table.add_row("", "[dim]Use ↑/↓ to navigate, Enter to select, Esc to cancel[/dim]")
+        table.add_row("", "[dim]使用 ↑/↓ 导航,Enter 选择,Esc 取消[/dim]")
 
         return Panel(
             table,
@@ -405,19 +405,19 @@ def select_with_arrows(options: dict, prompt_text: str = "Select an option", def
                         selected_key = option_keys[selected_index]
                         break
                     elif key == 'escape':
-                        console.print("\n[yellow]Selection cancelled[/yellow]")
+                        console.print("\n[yellow]选择已取消[/yellow]")
                         raise typer.Exit(1)
 
                     live.update(create_selection_panel(), refresh=True)
 
                 except KeyboardInterrupt:
-                    console.print("\n[yellow]Selection cancelled[/yellow]")
+                    console.print("\n[yellow]选择已取消[/yellow]")
                     raise typer.Exit(1)
 
     run_selection_loop()
 
     if selected_key is None:
-        console.print("\n[red]Selection failed.[/red]")
+        console.print("\n[red]选择失败。[/red]")
         raise typer.Exit(1)
 
     return selected_key
@@ -425,24 +425,24 @@ def select_with_arrows(options: dict, prompt_text: str = "Select an option", def
 console = Console()
 
 class BannerGroup(TyperGroup):
-    """Custom group that shows banner before help."""
+    """在帮助信息之前显示横幅的自定义组。"""
 
     def format_help(self, ctx, formatter):
-        # Show banner before help
+        # 在帮助信息之前显示横幅
         show_banner()
         super().format_help(ctx, formatter)
 
 
 app = typer.Typer(
     name="specify",
-    help="Setup tool for Specify spec-driven development projects",
+    help="Specify 规范驱动开发项目的配置工具",
     add_completion=False,
     invoke_without_command=True,
     cls=BannerGroup,
 )
 
 def show_banner():
-    """Display the ASCII art banner."""
+    """显示 ASCII 艺术横幅。"""
     banner_lines = BANNER.strip().split('\n')
     colors = ["bright_blue", "blue", "cyan", "bright_cyan", "white", "bright_white"]
 
@@ -457,14 +457,14 @@ def show_banner():
 
 @app.callback()
 def callback(ctx: typer.Context):
-    """Show banner when no subcommand is provided."""
+    """当未提供子命令时显示横幅。"""
     if ctx.invoked_subcommand is None and "--help" not in sys.argv and "-h" not in sys.argv:
         show_banner()
-        console.print(Align.center("[dim]Run 'specify --help' for usage information[/dim]"))
+        console.print(Align.center("[dim]运行 'specify --help' 获取使用信息[/dim]"))
         console.print()
 
 def run_command(cmd: list[str], check_return: bool = True, capture: bool = False, shell: bool = False) -> Optional[str]:
-    """Run a shell command and optionally capture output."""
+    """运行 shell 命令并可选地捕获输出。"""
     try:
         if capture:
             result = subprocess.run(cmd, check=check_return, capture_output=True, text=True, shell=shell)
@@ -474,46 +474,46 @@ def run_command(cmd: list[str], check_return: bool = True, capture: bool = False
             return None
     except subprocess.CalledProcessError as e:
         if check_return:
-            console.print(f"[red]Error running command:[/red] {' '.join(cmd)}")
-            console.print(f"[red]Exit code:[/red] {e.returncode}")
+            console.print(f"[red]运行命令出错:[/red] {' '.join(cmd)}")
+            console.print(f"[red]退出码:[/red] {e.returncode}")
             if hasattr(e, 'stderr') and e.stderr:
-                console.print(f"[red]Error output:[/red] {e.stderr}")
+                console.print(f"[red]错误输出:[/red] {e.stderr}")
             raise
         return None
 
 def check_tool(tool: str, tracker: StepTracker = None) -> bool:
-    """Check if a tool is installed. Optionally update tracker.
-    
+    """检查工具是否已安装。可选地更新追踪器。
+
     Args:
-        tool: Name of the tool to check
-        tracker: Optional StepTracker to update with results
-        
+        tool: 要检查的工具名称
+        tracker: 可选的 StepTracker，用于更新结果
+
     Returns:
-        True if tool is found, False otherwise
+        如果找到工具则返回 True，否则返回 False
     """
-    # Special handling for Claude CLI after `claude migrate-installer`
-    # See: https://github.com/github/spec-kit/issues/123
-    # The migrate-installer command REMOVES the original executable from PATH
-    # and creates an alias at ~/.claude/local/claude instead
-    # This path should be prioritized over other claude executables in PATH
+    # 在 `claude migrate-installer` 后对 Claude CLI 进行特殊处理
+    # 参见：https://github.com/github/spec-kit/issues/123
+    # migrate-installer 命令会从 PATH 中删除原始可执行文件
+    # 并在 ~/.claude/local/claude 创建别名
+    # 此路径应优先于 PATH 中的其他 claude 可执行文件
     if tool == "claude":
         if CLAUDE_LOCAL_PATH.exists() and CLAUDE_LOCAL_PATH.is_file():
             if tracker:
                 tracker.complete(tool, "available")
             return True
-    
+
     found = shutil.which(tool) is not None
-    
+
     if tracker:
         if found:
             tracker.complete(tool, "available")
         else:
-            tracker.error(tool, "not found")
-    
+            tracker.error(tool, "未找到")
+
     return found
 
 def is_git_repo(path: Path = None) -> bool:
-    """Check if the specified path is inside a git repository."""
+    """检查指定路径是否在 git 仓库内。"""
     if path is None:
         path = Path.cwd()
     
@@ -521,7 +521,7 @@ def is_git_repo(path: Path = None) -> bool:
         return False
 
     try:
-        # Use git command to check if inside a work tree
+        # 使用 git 命令检查是否在工作树内
         subprocess.run(
             ["git", "rev-parse", "--is-inside-work-tree"],
             check=True,
@@ -533,42 +533,42 @@ def is_git_repo(path: Path = None) -> bool:
         return False
 
 def init_git_repo(project_path: Path, quiet: bool = False) -> Tuple[bool, Optional[str]]:
-    """Initialize a git repository in the specified path.
-    
+    """在指定路径初始化 git 仓库。
+
     Args:
-        project_path: Path to initialize git repository in
-        quiet: if True suppress console output (tracker handles status)
-    
+        project_path: 初始化 git 仓库的路径
+        quiet: 如果为 True，则抑制控制台输出（由追踪器处理状态）
+
     Returns:
-        Tuple of (success: bool, error_message: Optional[str])
+        元组 (success: bool, error_message: Optional[str])
     """
     try:
         original_cwd = Path.cwd()
         os.chdir(project_path)
         if not quiet:
-            console.print("[cyan]Initializing git repository...[/cyan]")
+            console.print("[cyan]正在初始化 git 仓库...[/cyan]")
         subprocess.run(["git", "init"], check=True, capture_output=True, text=True)
         subprocess.run(["git", "add", "."], check=True, capture_output=True, text=True)
         subprocess.run(["git", "commit", "-m", "Initial commit from Specify template"], check=True, capture_output=True, text=True)
         if not quiet:
-            console.print("[green]✓[/green] Git repository initialized")
+            console.print("[green]✓[/green] Git 仓库已初始化")
         return True, None
 
     except subprocess.CalledProcessError as e:
-        error_msg = f"Command: {' '.join(e.cmd)}\nExit code: {e.returncode}"
+        error_msg = f"命令: {' '.join(e.cmd)}\n退出码: {e.returncode}"
         if e.stderr:
-            error_msg += f"\nError: {e.stderr.strip()}"
+            error_msg += f"\n错误: {e.stderr.strip()}"
         elif e.stdout:
-            error_msg += f"\nOutput: {e.stdout.strip()}"
-        
+            error_msg += f"\n输出: {e.stdout.strip()}"
+
         if not quiet:
-            console.print(f"[red]Error initializing git repository:[/red] {e}")
+            console.print(f"[red]初始化 git 仓库出错:[/red] {e}")
         return False, error_msg
     finally:
         os.chdir(original_cwd)
 
 def handle_vscode_settings(sub_item, dest_file, rel_path, verbose=False, tracker=None) -> None:
-    """Handle merging or copying of .vscode/settings.json files."""
+    """处理 .vscode/settings.json 文件的合并或复制。"""
     def log(message, color="green"):
         if verbose and not tracker:
             console.print(f"[{color}]{message}[/] {rel_path}")
@@ -582,55 +582,55 @@ def handle_vscode_settings(sub_item, dest_file, rel_path, verbose=False, tracker
             with open(dest_file, 'w', encoding='utf-8') as f:
                 json.dump(merged, f, indent=4)
                 f.write('\n')
-            log("Merged:", "green")
+            log("已合并:", "green")
         else:
             shutil.copy2(sub_item, dest_file)
-            log("Copied (no existing settings.json):", "blue")
+            log("已复制(无现有 settings.json):", "blue")
 
     except Exception as e:
-        log(f"Warning: Could not merge, copying instead: {e}", "yellow")
+        log(f"警告: 无法合并,改为复制: {e}", "yellow")
         shutil.copy2(sub_item, dest_file)
 
 def merge_json_files(existing_path: Path, new_content: dict, verbose: bool = False) -> dict:
-    """Merge new JSON content into existing JSON file.
+    """将新的 JSON 内容合并到现有 JSON 文件。
 
-    Performs a deep merge where:
-    - New keys are added
-    - Existing keys are preserved unless overwritten by new content
-    - Nested dictionaries are merged recursively
-    - Lists and other values are replaced (not merged)
+    执行深度合并：
+    - 添加新键
+    - 保留现有键，除非被新内容覆盖
+    - 递归合并嵌套字典
+    - 列表和其他值被替换（不合并）
 
     Args:
-        existing_path: Path to existing JSON file
-        new_content: New JSON content to merge in
-        verbose: Whether to print merge details
+        existing_path: 现有 JSON 文件的路径
+        new_content: 要合并的新 JSON 内容
+        verbose: 是否打印合并详情
 
     Returns:
-        Merged JSON content as dict
+        合并后的 JSON 内容字典
     """
     try:
         with open(existing_path, 'r', encoding='utf-8') as f:
             existing_content = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
-        # If file doesn't exist or is invalid, just use new content
+        # 如果文件不存在或无效，仅使用新内容
         return new_content
 
     def deep_merge(base: dict, update: dict) -> dict:
-        """Recursively merge update dict into base dict."""
+        """将更新字典递归合并到基础字典。"""
         result = base.copy()
         for key, value in update.items():
             if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-                # Recursively merge nested dictionaries
+                # 递归合并嵌套字典
                 result[key] = deep_merge(result[key], value)
             else:
-                # Add new key or replace existing value
+                # 添加新键或替换现有值
                 result[key] = value
         return result
 
     merged = deep_merge(existing_content, new_content)
 
     if verbose:
-        console.print(f"[cyan]Merged JSON file:[/cyan] {existing_path.name}")
+        console.print(f"[cyan]已合并 JSON 文件:[/cyan] {existing_path.name}")
 
     return merged
 
@@ -641,7 +641,7 @@ def download_template_from_github(ai_assistant: str, download_dir: Path, *, scri
         client = httpx.Client(verify=ssl_context)
 
     if verbose:
-        console.print("[cyan]Fetching latest release information...[/cyan]")
+        console.print("[cyan]正在获取最新版本信息...[/cyan]")
     api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
 
     try:
@@ -653,18 +653,18 @@ def download_template_from_github(ai_assistant: str, download_dir: Path, *, scri
         )
         status = response.status_code
         if status != 200:
-            # Format detailed error message with rate-limit info
+            # 格式化详细的错误消息，包含速率限制信息
             error_msg = _format_rate_limit_error(status, response.headers, api_url)
             if debug:
-                error_msg += f"\n\n[dim]Response body (truncated 500):[/dim]\n{response.text[:500]}"
+                error_msg += f"\n\n[dim]响应正文（截断 500 字符）:[/dim]\n{response.text[:500]}"
             raise RuntimeError(error_msg)
         try:
             release_data = response.json()
         except ValueError as je:
-            raise RuntimeError(f"Failed to parse release JSON: {je}\nRaw (truncated 400): {response.text[:400]}")
+            raise RuntimeError(f"解析版本 JSON 失败: {je}\n原始数据(截断 400 字符): {response.text[:400]}")
     except Exception as e:
-        console.print(f"[red]Error fetching release information[/red]")
-        console.print(Panel(str(e), title="Fetch Error", border_style="red"))
+        console.print(f"[red]获取版本信息出错[/red]")
+        console.print(Panel(str(e), title="获取错误", border_style="red"))
         raise typer.Exit(1)
 
     assets = release_data.get("assets", [])
@@ -677,9 +677,9 @@ def download_template_from_github(ai_assistant: str, download_dir: Path, *, scri
     asset = matching_assets[0] if matching_assets else None
 
     if asset is None:
-        console.print(f"[red]No matching release asset found[/red] for [bold]{ai_assistant}[/bold] (expected pattern: [bold]{pattern}[/bold])")
+        console.print(f"[red]未找到匹配的版本资源[/red],AI 助手为 [bold]{ai_assistant}[/bold] (期望模式: [bold]{pattern}[/bold])")
         asset_names = [a.get('name', '?') for a in assets]
-        console.print(Panel("\n".join(asset_names) or "(no assets)", title="Available Assets", border_style="yellow"))
+        console.print(Panel("\n".join(asset_names) or "(无资源)", title="可用资源", border_style="yellow"))
         raise typer.Exit(1)
 
     download_url = asset["browser_download_url"]
@@ -687,13 +687,13 @@ def download_template_from_github(ai_assistant: str, download_dir: Path, *, scri
     file_size = asset["size"]
 
     if verbose:
-        console.print(f"[cyan]Found template:[/cyan] {filename}")
-        console.print(f"[cyan]Size:[/cyan] {file_size:,} bytes")
-        console.print(f"[cyan]Release:[/cyan] {release_data['tag_name']}")
+        console.print(f"[cyan]已找到模板:[/cyan] {filename}")
+        console.print(f"[cyan]大小:[/cyan] {file_size:,} 字节")
+        console.print(f"[cyan]版本:[/cyan] {release_data['tag_name']}")
 
     zip_path = download_dir / filename
     if verbose:
-        console.print(f"[cyan]Downloading template...[/cyan]")
+        console.print(f"[cyan]正在下载模板...[/cyan]")
 
     try:
         with client.stream(
@@ -722,7 +722,7 @@ def download_template_from_github(ai_assistant: str, download_dir: Path, *, scri
                             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
                             console=console,
                         ) as progress:
-                            task = progress.add_task("Downloading...", total=total_size)
+                            task = progress.add_task("正在下载...", total=total_size)
                             downloaded = 0
                             for chunk in response.iter_bytes(chunk_size=8192):
                                 f.write(chunk)
@@ -732,14 +732,14 @@ def download_template_from_github(ai_assistant: str, download_dir: Path, *, scri
                         for chunk in response.iter_bytes(chunk_size=8192):
                             f.write(chunk)
     except Exception as e:
-        console.print(f"[red]Error downloading template[/red]")
+        console.print(f"[red]下载模板出错[/red]")
         detail = str(e)
         if zip_path.exists():
             zip_path.unlink()
-        console.print(Panel(detail, title="Download Error", border_style="red"))
+        console.print(Panel(detail, title="下载错误", border_style="red"))
         raise typer.Exit(1)
     if verbose:
-        console.print(f"Downloaded: {filename}")
+        console.print(f"已下载: {filename}")
     metadata = {
         "filename": filename,
         "size": file_size,
@@ -749,13 +749,13 @@ def download_template_from_github(ai_assistant: str, download_dir: Path, *, scri
     return zip_path, metadata
 
 def download_and_extract_template(project_path: Path, ai_assistant: str, script_type: str, is_current_dir: bool = False, *, verbose: bool = True, tracker: StepTracker | None = None, client: httpx.Client = None, debug: bool = False, github_token: str = None) -> Path:
-    """Download the latest release and extract it to create a new project.
-    Returns project_path. Uses tracker if provided (with keys: fetch, download, extract, cleanup)
+    """下载最新版本并解压以创建新项目。
+    返回 project_path。如果提供了 tracker，则使用它（使用的键：fetch, download, extract, cleanup）
     """
     current_dir = Path.cwd()
 
     if tracker:
-        tracker.start("fetch", "contacting GitHub API")
+        tracker.start("fetch", "正在连接 GitHub API")
     try:
         zip_path, meta = download_template_from_github(
             ai_assistant,
@@ -768,22 +768,22 @@ def download_and_extract_template(project_path: Path, ai_assistant: str, script_
             github_token=github_token
         )
         if tracker:
-            tracker.complete("fetch", f"release {meta['release']} ({meta['size']:,} bytes)")
-            tracker.add("download", "Download template")
+            tracker.complete("fetch", f"版本 {meta['release']} ({meta['size']:,} 字节)")
+            tracker.add("download", "下载模板")
             tracker.complete("download", meta['filename'])
     except Exception as e:
         if tracker:
             tracker.error("fetch", str(e))
         else:
             if verbose:
-                console.print(f"[red]Error downloading template:[/red] {e}")
+                console.print(f"[red]下载模板出错:[/red] {e}")
         raise
 
     if tracker:
-        tracker.add("extract", "Extract template")
+        tracker.add("extract", "解压模板")
         tracker.start("extract")
     elif verbose:
-        console.print("Extracting template...")
+        console.print("正在解压模板...")
 
     try:
         if not is_current_dir:
@@ -793,9 +793,9 @@ def download_and_extract_template(project_path: Path, ai_assistant: str, script_
             zip_contents = zip_ref.namelist()
             if tracker:
                 tracker.start("zip-list")
-                tracker.complete("zip-list", f"{len(zip_contents)} entries")
+                tracker.complete("zip-list", f"{len(zip_contents)} 项")
             elif verbose:
-                console.print(f"[cyan]ZIP contains {len(zip_contents)} items[/cyan]")
+                console.print(f"[cyan]ZIP 包含 {len(zip_contents)} 项[/cyan]")
 
             if is_current_dir:
                 with tempfile.TemporaryDirectory() as temp_dir:
@@ -805,31 +805,31 @@ def download_and_extract_template(project_path: Path, ai_assistant: str, script_
                     extracted_items = list(temp_path.iterdir())
                     if tracker:
                         tracker.start("extracted-summary")
-                        tracker.complete("extracted-summary", f"temp {len(extracted_items)} items")
+                        tracker.complete("extracted-summary", f"临时 {len(extracted_items)} 项")
                     elif verbose:
-                        console.print(f"[cyan]Extracted {len(extracted_items)} items to temp location[/cyan]")
+                        console.print(f"[cyan]已解压 {len(extracted_items)} 项到临时位置[/cyan]")
 
                     source_dir = temp_path
                     if len(extracted_items) == 1 and extracted_items[0].is_dir():
                         source_dir = extracted_items[0]
                         if tracker:
-                            tracker.add("flatten", "Flatten nested directory")
+                            tracker.add("flatten", "展平嵌套目录")
                             tracker.complete("flatten")
                         elif verbose:
-                            console.print(f"[cyan]Found nested directory structure[/cyan]")
+                            console.print(f"[cyan]发现嵌套目录结构[/cyan]")
 
                     for item in source_dir.iterdir():
                         dest_path = project_path / item.name
                         if item.is_dir():
                             if dest_path.exists():
                                 if verbose and not tracker:
-                                    console.print(f"[yellow]Merging directory:[/yellow] {item.name}")
+                                    console.print(f"[yellow]正在合并目录:[/yellow] {item.name}")
                                 for sub_item in item.rglob('*'):
                                     if sub_item.is_file():
                                         rel_path = sub_item.relative_to(item)
                                         dest_file = dest_path / rel_path
                                         dest_file.parent.mkdir(parents=True, exist_ok=True)
-                                        # Special handling for .vscode/settings.json - merge instead of overwrite
+                                        # .vscode/settings.json 特殊处理 - 合并而不是覆盖
                                         if dest_file.name == "settings.json" and dest_file.parent.name == ".vscode":
                                             handle_vscode_settings(sub_item, dest_file, rel_path, verbose, tracker)
                                         else:
@@ -838,21 +838,21 @@ def download_and_extract_template(project_path: Path, ai_assistant: str, script_
                                 shutil.copytree(item, dest_path)
                         else:
                             if dest_path.exists() and verbose and not tracker:
-                                console.print(f"[yellow]Overwriting file:[/yellow] {item.name}")
+                                console.print(f"[yellow]正在覆盖文件:[/yellow] {item.name}")
                             shutil.copy2(item, dest_path)
                     if verbose and not tracker:
-                        console.print(f"[cyan]Template files merged into current directory[/cyan]")
+                        console.print(f"[cyan]模板文件已合并到当前目录[/cyan]")
             else:
                 zip_ref.extractall(project_path)
 
                 extracted_items = list(project_path.iterdir())
                 if tracker:
                     tracker.start("extracted-summary")
-                    tracker.complete("extracted-summary", f"{len(extracted_items)} top-level items")
+                    tracker.complete("extracted-summary", f"{len(extracted_items)} 项顶层项")
                 elif verbose:
-                    console.print(f"[cyan]Extracted {len(extracted_items)} items to {project_path}:[/cyan]")
+                    console.print(f"[cyan]已解压 {len(extracted_items)} 项到 {project_path}:[/cyan]")
                     for item in extracted_items:
-                        console.print(f"  - {item.name} ({'dir' if item.is_dir() else 'file'})")
+                        console.print(f"  - {item.name} ({'目录' if item.is_dir() else '文件'})")
 
                 if len(extracted_items) == 1 and extracted_items[0].is_dir():
                     nested_dir = extracted_items[0]
@@ -864,19 +864,19 @@ def download_and_extract_template(project_path: Path, ai_assistant: str, script_
 
                     shutil.move(str(temp_move_dir), str(project_path))
                     if tracker:
-                        tracker.add("flatten", "Flatten nested directory")
+                        tracker.add("flatten", "展平嵌套目录")
                         tracker.complete("flatten")
                     elif verbose:
-                        console.print(f"[cyan]Flattened nested directory structure[/cyan]")
+                        console.print(f"[cyan]已展平嵌套目录结构[/cyan]")
 
     except Exception as e:
         if tracker:
             tracker.error("extract", str(e))
         else:
             if verbose:
-                console.print(f"[red]Error extracting template:[/red] {e}")
+                console.print(f"[red]解压模板出错:[/red] {e}")
                 if debug:
-                    console.print(Panel(str(e), title="Extraction Error", border_style="red"))
+                    console.print(Panel(str(e), title="解压错误", border_style="red"))
 
         if not is_current_dir and project_path.exists():
             shutil.rmtree(project_path)
@@ -886,22 +886,22 @@ def download_and_extract_template(project_path: Path, ai_assistant: str, script_
             tracker.complete("extract")
     finally:
         if tracker:
-            tracker.add("cleanup", "Remove temporary archive")
+            tracker.add("cleanup", "删除临时存档")
 
         if zip_path.exists():
             zip_path.unlink()
             if tracker:
                 tracker.complete("cleanup")
             elif verbose:
-                console.print(f"Cleaned up: {zip_path.name}")
+                console.print(f"已清理: {zip_path.name}")
 
     return project_path
 
 
 def ensure_executable_scripts(project_path: Path, tracker: StepTracker | None = None) -> None:
-    """Ensure POSIX .sh scripts under .specify/scripts (recursively) have execute bits (no-op on Windows)."""
+    """确保 .specify/scripts 下的 POSIX .sh 脚本（递归）具有执行位（Windows 上无操作）。"""
     if os.name == "nt":
-        return  # Windows: skip silently
+        return  # Windows：静默跳过
     scripts_root = project_path / ".specify" / "scripts"
     if not scripts_root.is_dir():
         return
@@ -931,53 +931,53 @@ def ensure_executable_scripts(project_path: Path, tracker: StepTracker | None = 
         except Exception as e:
             failures.append(f"{script.relative_to(scripts_root)}: {e}")
     if tracker:
-        detail = f"{updated} updated" + (f", {len(failures)} failed" if failures else "")
-        tracker.add("chmod", "Set script permissions recursively")
+        detail = f"{updated} 已更新" + (f", {len(failures)} 失败" if failures else "")
+        tracker.add("chmod", "递归设置脚本权限")
         (tracker.error if failures else tracker.complete)("chmod", detail)
     else:
         if updated:
-            console.print(f"[cyan]Updated execute permissions on {updated} script(s) recursively[/cyan]")
+            console.print(f"[cyan]递归更新了 {updated} 个脚本的执行权限[/cyan]")
         if failures:
-            console.print("[yellow]Some scripts could not be updated:[/yellow]")
+            console.print("[yellow]某些脚本无法更新:[/yellow]")
             for f in failures:
                 console.print(f"  - {f}")
 
 @app.command()
 def init(
-    project_name: str = typer.Argument(None, help="Name for your new project directory (optional if using --here, or use '.' for current directory)"),
-    ai_assistant: str = typer.Option(None, "--ai", help="AI assistant to use: claude, gemini, copilot, cursor-agent, qwen, opencode, codex, windsurf, kilocode, auggie, codebuddy, amp, shai, q, bob, or qoder "),
-    script_type: str = typer.Option(None, "--script", help="Script type to use: sh or ps"),
-    ignore_agent_tools: bool = typer.Option(False, "--ignore-agent-tools", help="Skip checks for AI agent tools like Claude Code"),
-    no_git: bool = typer.Option(False, "--no-git", help="Skip git repository initialization"),
-    here: bool = typer.Option(False, "--here", help="Initialize project in the current directory instead of creating a new one"),
-    force: bool = typer.Option(False, "--force", help="Force merge/overwrite when using --here (skip confirmation)"),
-    skip_tls: bool = typer.Option(False, "--skip-tls", help="Skip SSL/TLS verification (not recommended)"),
-    debug: bool = typer.Option(False, "--debug", help="Show verbose diagnostic output for network and extraction failures"),
-    github_token: str = typer.Option(None, "--github-token", help="GitHub token to use for API requests (or set GH_TOKEN or GITHUB_TOKEN environment variable)"),
+    project_name: str = typer.Argument(None, help="新项目目录的名称（如果使用 --here 或 '.' 则可选）"),
+    ai_assistant: str = typer.Option(None, "--ai", help="要使用的 AI 助手：claude, gemini, copilot, cursor-agent, qwen, opencode, codex, windsurf, kilocode, auggie, codebuddy, amp, shai, q, bob, 或 qoder "),
+    script_type: str = typer.Option(None, "--script", help="要使用的脚本类型：sh 或 ps"),
+    ignore_agent_tools: bool = typer.Option(False, "--ignore-agent-tools", help="跳过对 AI 智能体工具（如 Claude Code）的检查"),
+    no_git: bool = typer.Option(False, "--no-git", help="跳过 git 仓库初始化"),
+    here: bool = typer.Option(False, "--here", help="在当前目录初始化项目，而不是创建新目录"),
+    force: bool = typer.Option(False, "--force", help="使用 --here 时强制合并/覆盖（跳过确认）"),
+    skip_tls: bool = typer.Option(False, "--skip-tls", help="跳过 SSL/TLS 验证（不推荐）"),
+    debug: bool = typer.Option(False, "--debug", help="显示网络和提取失败的详细诊断输出"),
+    github_token: str = typer.Option(None, "--github-token", help="用于 API 请求的 GitHub token（或设置 GH_TOKEN 或 GITHUB_TOKEN 环境变量）"),
 ):
     """
-    Initialize a new Specify project from the latest template.
-    
-    This command will:
-    1. Check that required tools are installed (git is optional)
-    2. Let you choose your AI assistant
-    3. Download the appropriate template from GitHub
-    4. Extract the template to a new project directory or current directory
-    5. Initialize a fresh git repository (if not --no-git and no existing repo)
-    6. Optionally set up AI assistant commands
-    
-    Examples:
+    从最新模板初始化一个新的 Specify 项目。
+
+    此命令将执行以下操作：
+    1. 检查所需工具是否已安装（git 是可选的）
+    2. 让您选择 AI 助手
+    3. 从 GitHub 下载适当的模板
+    4. 将模板提取到新项目目录或当前目录
+    5. 初始化新的 git 仓库（如果未使用 --no-git 且没有现有仓库）
+    6. 可选地设置 AI 助手命令
+
+    示例：
         specify init my-project
         specify init my-project --ai claude
         specify init my-project --ai copilot --no-git
         specify init --ignore-agent-tools my-project
-        specify init . --ai claude         # Initialize in current directory
-        specify init .                     # Initialize in current directory (interactive AI selection)
-        specify init --here --ai claude    # Alternative syntax for current directory
+        specify init . --ai claude         # 在当前目录初始化
+        specify init .                     # 在当前目录初始化（交互式 AI 选择）
+        specify init --here --ai claude    # 当前目录的替代语法
         specify init --here --ai codex
         specify init --here --ai codebuddy
         specify init --here
-        specify init --here --force  # Skip confirmation when current directory not empty
+        specify init --here --force  # 当当前目录非空时跳过确认
     """
 
     show_banner()
@@ -1242,13 +1242,13 @@ def init(
 
 @app.command()
 def check():
-    """Check that all required tools are installed."""
+    """检查所有必需工具是否已安装。"""
     show_banner()
-    console.print("[bold]Checking for installed tools...[/bold]\n")
+    console.print("[bold]正在检查已安装的工具...[/bold]\n")
 
-    tracker = StepTracker("Check Available Tools")
+    tracker = StepTracker("检查可用工具")
 
-    tracker.add("git", "Git version control")
+    tracker.add("git", "Git 版本控制")
     git_ok = check_tool("git", tracker=tracker)
 
     agent_results = {}
@@ -1261,11 +1261,11 @@ def check():
         if requires_cli:
             agent_results[agent_key] = check_tool(agent_key, tracker=tracker)
         else:
-            # IDE-based agent - skip CLI check and mark as optional
-            tracker.skip(agent_key, "IDE-based, no CLI check")
-            agent_results[agent_key] = False  # Don't count IDE agents as "found"
+            # 基于 IDE 的智能体 - 跳过 CLI 检查并标记为可选
+            tracker.skip(agent_key, "基于 IDE，无需 CLI 检查")
+            agent_results[agent_key] = False  # 不将 IDE 智能体计为"已找到"
 
-    # Check VS Code variants (not in agent config)
+    # 检查 VS Code 变体（不在智能体配置中）
     tracker.add("code", "Visual Studio Code")
     code_ok = check_tool("code", tracker=tracker)
 
@@ -1274,28 +1274,28 @@ def check():
 
     console.print(tracker.render())
 
-    console.print("\n[bold green]Specify CLI is ready to use![/bold green]")
+    console.print("\n[bold green]Specify CLI 已准备就绪！[/bold green]")
 
     if not git_ok:
-        console.print("[dim]Tip: Install git for repository management[/dim]")
+        console.print("[dim]提示：安装 git 以进行版本管理[/dim]")
 
     if not any(agent_results.values()):
-        console.print("[dim]Tip: Install an AI assistant for the best experience[/dim]")
+        console.print("[dim]提示：安装 AI 助手以获得最佳体验[/dim]")
 
 @app.command()
 def version():
-    """Display version and system information."""
+    """显示版本和系统信息。"""
     import platform
     import importlib.metadata
-    
+
     show_banner()
-    
-    # Get CLI version from package metadata
+
+    # 从包元数据获取 CLI 版本
     cli_version = "unknown"
     try:
         cli_version = importlib.metadata.version("specify-cli")
     except Exception:
-        # Fallback: try reading from pyproject.toml if running from source
+        # 备用方案：如果从源码运行，尝试从 pyproject.toml 读取
         try:
             import tomllib
             pyproject_path = Path(__file__).parent.parent.parent / "pyproject.toml"
@@ -1305,15 +1305,15 @@ def version():
                     cli_version = data.get("project", {}).get("version", "unknown")
         except Exception:
             pass
-    
-    # Fetch latest template release version
+
+    # 获取最新模板发布版本
     repo_owner = "github"
     repo_name = "spec-kit"
     api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
-    
+
     template_version = "unknown"
     release_date = "unknown"
-    
+
     try:
         response = client.get(
             api_url,
@@ -1324,12 +1324,12 @@ def version():
         if response.status_code == 200:
             release_data = response.json()
             template_version = release_data.get("tag_name", "unknown")
-            # Remove 'v' prefix if present
+            # 如果存在，去除 'v' 前缀
             if template_version.startswith("v"):
                 template_version = template_version[1:]
             release_date = release_data.get("published_at", "unknown")
             if release_date != "unknown":
-                # Format the date nicely
+                # 格式化日期
                 try:
                     dt = datetime.fromisoformat(release_date.replace('Z', '+00:00'))
                     release_date = dt.strftime("%Y-%m-%d")
@@ -1339,21 +1339,21 @@ def version():
         pass
 
     info_table = Table(show_header=False, box=None, padding=(0, 2))
-    info_table.add_column("Key", style="cyan", justify="right")
-    info_table.add_column("Value", style="white")
+    info_table.add_column("键", style="cyan", justify="right")
+    info_table.add_column("值", style="white")
 
-    info_table.add_row("CLI Version", cli_version)
-    info_table.add_row("Template Version", template_version)
-    info_table.add_row("Released", release_date)
+    info_table.add_row("CLI 版本", cli_version)
+    info_table.add_row("模板版本", template_version)
+    info_table.add_row("发布日期", release_date)
     info_table.add_row("", "")
     info_table.add_row("Python", platform.python_version())
-    info_table.add_row("Platform", platform.system())
-    info_table.add_row("Architecture", platform.machine())
-    info_table.add_row("OS Version", platform.version())
+    info_table.add_row("平台", platform.system())
+    info_table.add_row("架构", platform.machine())
+    info_table.add_row("操作系统版本", platform.version())
 
     panel = Panel(
         info_table,
-        title="[bold cyan]Specify CLI Information[/bold cyan]",
+        title="[bold cyan]Specify CLI 信息[/bold cyan]",
         border_style="cyan",
         padding=(1, 2)
     )
