@@ -704,7 +704,7 @@ def download_template_from_github(ai_assistant: str, download_dir: Path, *, scri
             headers=_github_auth_headers(github_token),
         ) as response:
             if response.status_code != 200:
-                # Handle rate-limiting on download as well
+                # 处理下载时的速率限制
                 error_msg = _format_rate_limit_error(response.status_code, response.headers, download_url)
                 if debug:
                     error_msg += f"\n\n[dim]Response body (truncated 400):[/dim]\n{response.text[:400]}"
@@ -977,21 +977,21 @@ def init(
         specify init --here --ai codex
         specify init --here --ai codebuddy
         specify init --here
-        specify init --here --force  # 当当前目录非空时跳过确认
+        specify init --here --force  # 当前目录非空时跳过确认
     """
 
     show_banner()
 
     if project_name == ".":
         here = True
-        project_name = None  # Clear project_name to use existing validation logic
+        project_name = None  # 清除 project_name 以使用现有的验证逻辑
 
     if here and project_name:
-        console.print("[red]Error:[/red] Cannot specify both project name and --here flag")
+        console.print("[red]错误：[/red] 不能同时指定项目名称和 --here 标志")
         raise typer.Exit(1)
 
     if not here and not project_name:
-        console.print("[red]Error:[/red] Must specify either a project name, use '.' for current directory, or use --here flag")
+        console.print("[red]错误：[/red] 必须指定项目名称，使用 '.' 表示当前目录，或使用 --here 标志")
         raise typer.Exit(1)
 
     if here:
@@ -1000,22 +1000,22 @@ def init(
 
         existing_items = list(project_path.iterdir())
         if existing_items:
-            console.print(f"[yellow]Warning:[/yellow] Current directory is not empty ({len(existing_items)} items)")
-            console.print("[yellow]Template files will be merged with existing content and may overwrite existing files[/yellow]")
+            console.print(f"[yellow]警告：[/yellow] 当前目录非空（{len(existing_items)} 项）")
+            console.print("[yellow]模板文件将与现有内容合并，可能会覆盖现有文件[/yellow]")
             if force:
-                console.print("[cyan]--force supplied: skipping confirmation and proceeding with merge[/cyan]")
+                console.print("[cyan]已提供 --force：跳过确认并继续合并[/cyan]")
             else:
-                response = typer.confirm("Do you want to continue?")
+                response = typer.confirm("是否继续？")
                 if not response:
-                    console.print("[yellow]Operation cancelled[/yellow]")
+                    console.print("[yellow]操作已取消[/yellow]")
                     raise typer.Exit(0)
     else:
         project_path = Path(project_name).resolve()
         if project_path.exists():
             error_panel = Panel(
-                f"Directory '[cyan]{project_name}[/cyan]' already exists\n"
-                "Please choose a different project name or remove the existing directory.",
-                title="[red]Directory Conflict[/red]",
+                f"目录 '[cyan]{project_name}[/cyan]' 已存在\n"
+                "请选择不同的项目名称或删除现有目录。",
+                title="[red]目录冲突[/red]",
                 border_style="red",
                 padding=(1, 2)
             )
@@ -1026,14 +1026,14 @@ def init(
     current_dir = Path.cwd()
 
     setup_lines = [
-        "[cyan]Specify Project Setup[/cyan]",
+        "[cyan]Specify 项目设置[/cyan]",
         "",
-        f"{'Project':<15} [green]{project_path.name}[/green]",
-        f"{'Working Path':<15} [dim]{current_dir}[/dim]",
+        f"{'项目':<15} [green]{project_path.name}[/green]",
+        f"{'工作路径':<15} [dim]{current_dir}[/dim]",
     ]
 
     if not here:
-        setup_lines.append(f"{'Target Path':<15} [dim]{project_path}[/dim]")
+        setup_lines.append(f"{'目标路径':<15} [dim]{project_path}[/dim]")
 
     console.print(Panel("\n".join(setup_lines), border_style="cyan", padding=(1, 2)))
 
@@ -1041,19 +1041,19 @@ def init(
     if not no_git:
         should_init_git = check_tool("git")
         if not should_init_git:
-            console.print("[yellow]Git not found - will skip repository initialization[/yellow]")
+            console.print("[yellow]未找到 Git - 将跳过仓库初始化[/yellow]")
 
     if ai_assistant:
         if ai_assistant not in AGENT_CONFIG:
-            console.print(f"[red]Error:[/red] Invalid AI assistant '{ai_assistant}'. Choose from: {', '.join(AGENT_CONFIG.keys())}")
+            console.print(f"[red]错误：[/red] 无效的 AI 助手 '{ai_assistant}'。请从以下选项中选择：{', '.join(AGENT_CONFIG.keys())}")
             raise typer.Exit(1)
         selected_ai = ai_assistant
     else:
-        # Create options dict for selection (agent_key: display_name)
+        # 创建用于选择的选项字典（智能体键：显示名称）
         ai_choices = {key: config["name"] for key, config in AGENT_CONFIG.items()}
         selected_ai = select_with_arrows(
-            ai_choices, 
-            "Choose your AI assistant:", 
+            ai_choices,
+            "选择你的 AI 助手：",
             "copilot"
         )
 
@@ -1063,11 +1063,11 @@ def init(
             install_url = agent_config["install_url"]
             if not check_tool(selected_ai):
                 error_panel = Panel(
-                    f"[cyan]{selected_ai}[/cyan] not found\n"
-                    f"Install from: [cyan]{install_url}[/cyan]\n"
-                    f"{agent_config['name']} is required to continue with this project type.\n\n"
-                    "Tip: Use [cyan]--ignore-agent-tools[/cyan] to skip this check",
-                    title="[red]Agent Detection Error[/red]",
+                    f"[cyan]{selected_ai}[/cyan] 未找到\n"
+                    f"安装地址：[cyan]{install_url}[/cyan]\n"
+                    f"需要 {agent_config['name']} 才能继续此项目类型。\n\n"
+                    "提示：使用 [cyan]--ignore-agent-tools[/cyan] 跳过此检查",
+                    title="[red]智能体检测错误[/red]",
                     border_style="red",
                     padding=(1, 2)
                 )
@@ -1077,44 +1077,44 @@ def init(
 
     if script_type:
         if script_type not in SCRIPT_TYPE_CHOICES:
-            console.print(f"[red]Error:[/red] Invalid script type '{script_type}'. Choose from: {', '.join(SCRIPT_TYPE_CHOICES.keys())}")
+            console.print(f"[red]错误：[/red] 无效的脚本类型 '{script_type}'。请从以下选项中选择：{', '.join(SCRIPT_TYPE_CHOICES.keys())}")
             raise typer.Exit(1)
         selected_script = script_type
     else:
         default_script = "ps" if os.name == "nt" else "sh"
 
         if sys.stdin.isatty():
-            selected_script = select_with_arrows(SCRIPT_TYPE_CHOICES, "Choose script type (or press Enter)", default_script)
+            selected_script = select_with_arrows(SCRIPT_TYPE_CHOICES, "选择脚本类型（或按回车）", default_script)
         else:
             selected_script = default_script
 
-    console.print(f"[cyan]Selected AI assistant:[/cyan] {selected_ai}")
-    console.print(f"[cyan]Selected script type:[/cyan] {selected_script}")
+    console.print(f"[cyan]选中的 AI 助手：[/cyan] {selected_ai}")
+    console.print(f"[cyan]选中的脚本类型：[/cyan] {selected_script}")
 
-    tracker = StepTracker("Initialize Specify Project")
+    tracker = StepTracker("初始化 Specify 项目")
 
     sys._specify_tracker_active = True
 
-    tracker.add("precheck", "Check required tools")
+    tracker.add("precheck", "检查必需工具")
     tracker.complete("precheck", "ok")
-    tracker.add("ai-select", "Select AI assistant")
+    tracker.add("ai-select", "选择 AI 助手")
     tracker.complete("ai-select", f"{selected_ai}")
-    tracker.add("script-select", "Select script type")
+    tracker.add("script-select", "选择脚本类型")
     tracker.complete("script-select", selected_script)
     for key, label in [
-        ("fetch", "Fetch latest release"),
-        ("download", "Download template"),
-        ("extract", "Extract template"),
-        ("zip-list", "Archive contents"),
-        ("extracted-summary", "Extraction summary"),
-        ("chmod", "Ensure scripts executable"),
-        ("cleanup", "Cleanup"),
-        ("git", "Initialize git repository"),
-        ("final", "Finalize")
+        ("fetch", "获取最新版本"),
+        ("download", "下载模板"),
+        ("extract", "解压模板"),
+        ("zip-list", "归档内容"),
+        ("extracted-summary", "解压摘要"),
+        ("chmod", "确保脚本可执行"),
+        ("cleanup", "清理"),
+        ("git", "初始化 git 仓库"),
+        ("final", "完成")
     ]:
         tracker.add(key, label)
 
-    # Track git error message outside Live context so it persists
+    # 在 Live 上下文外跟踪 git 错误消息，使其持久化
     git_error_message = None
 
     with Live(tracker.render(), console=console, refresh_per_second=8, transient=True) as live:
@@ -1131,32 +1131,32 @@ def init(
             if not no_git:
                 tracker.start("git")
                 if is_git_repo(project_path):
-                    tracker.complete("git", "existing repo detected")
+                    tracker.complete("git", "检测到现有仓库")
                 elif should_init_git:
                     success, error_msg = init_git_repo(project_path, quiet=True)
                     if success:
-                        tracker.complete("git", "initialized")
+                        tracker.complete("git", "已初始化")
                     else:
-                        tracker.error("git", "init failed")
+                        tracker.error("git", "初始化失败")
                         git_error_message = error_msg
                 else:
-                    tracker.skip("git", "git not available")
+                    tracker.skip("git", "git 不可用")
             else:
-                tracker.skip("git", "--no-git flag")
+                tracker.skip("git", "--no-git 标志")
 
-            tracker.complete("final", "project ready")
+            tracker.complete("final", "项目就绪")
         except Exception as e:
             tracker.error("final", str(e))
-            console.print(Panel(f"Initialization failed: {e}", title="Failure", border_style="red"))
+            console.print(Panel(f"初始化失败：{e}", title="失败", border_style="red"))
             if debug:
                 _env_pairs = [
                     ("Python", sys.version.split()[0]),
-                    ("Platform", sys.platform),
-                    ("CWD", str(Path.cwd())),
+                    ("平台", sys.platform),
+                    ("当前目录", str(Path.cwd())),
                 ]
                 _label_width = max(len(k) for k, _ in _env_pairs)
                 env_lines = [f"{k.ljust(_label_width)} → [bright_black]{v}[/bright_black]" for k, v in _env_pairs]
-                console.print(Panel("\n".join(env_lines), title="Debug Environment", border_style="magenta"))
+                console.print(Panel("\n".join(env_lines), title="调试环境", border_style="magenta"))
             if not here and project_path.exists():
                 shutil.rmtree(project_path)
             raise typer.Exit(1)
@@ -1164,33 +1164,33 @@ def init(
             pass
 
     console.print(tracker.render())
-    console.print("\n[bold green]Project ready.[/bold green]")
-    
-    # Show git error details if initialization failed
+    console.print("\n[bold green]项目就绪。[/bold green]")
+
+    # 如果初始化失败，显示 git 错误详情
     if git_error_message:
         console.print()
         git_error_panel = Panel(
-            f"[yellow]Warning:[/yellow] Git repository initialization failed\n\n"
+            f"[yellow]警告：[/yellow] Git 仓库初始化失败\n\n"
             f"{git_error_message}\n\n"
-            f"[dim]You can initialize git manually later with:[/dim]\n"
+            f"[dim]你稍后可以手动初始化 git：[/dim]\n"
             f"[cyan]cd {project_path if not here else '.'}[/cyan]\n"
             f"[cyan]git init[/cyan]\n"
             f"[cyan]git add .[/cyan]\n"
             f"[cyan]git commit -m \"Initial commit\"[/cyan]",
-            title="[red]Git Initialization Failed[/red]",
+            title="[red]Git 初始化失败[/red]",
             border_style="red",
             padding=(1, 2)
         )
         console.print(git_error_panel)
 
-    # Agent folder security notice
+    # 智能体文件夹安全提醒
     agent_config = AGENT_CONFIG.get(selected_ai)
     if agent_config:
         agent_folder = agent_config["folder"]
         security_notice = Panel(
-            f"Some agents may store credentials, auth tokens, or other identifying and private artifacts in the agent folder within your project.\n"
-            f"Consider adding [cyan]{agent_folder}[/cyan] (or parts of it) to [cyan].gitignore[/cyan] to prevent accidental credential leakage.",
-            title="[yellow]Agent Folder Security[/yellow]",
+            f"某些智能体可能会在项目内的智能体文件夹中存储凭证、认证令牌或其他识别和私有信息。\n"
+            f"考虑将 [cyan]{agent_folder}[/cyan]（或其部分）添加到 [cyan].gitignore[/cyan] 中，以防止意外的凭证泄露。",
+            title="[yellow]智能体文件夹安全[/yellow]",
             border_style="yellow",
             padding=(1, 2)
         )
@@ -1199,13 +1199,13 @@ def init(
 
     steps_lines = []
     if not here:
-        steps_lines.append(f"1. Go to the project folder: [cyan]cd {project_name}[/cyan]")
+        steps_lines.append(f"1. 进入项目文件夹：[cyan]cd {project_name}[/cyan]")
         step_num = 2
     else:
-        steps_lines.append("1. You're already in the project directory!")
+        steps_lines.append("1. 你已经在项目目录中了！")
         step_num = 2
 
-    # Add Codex-specific setup step if needed
+    # 如果需要，添加 Codex 特定设置步骤
     if selected_ai == "codex":
         codex_path = project_path / ".codex"
         quoted_path = shlex.quote(str(codex_path))
@@ -1213,30 +1213,30 @@ def init(
             cmd = f"setx CODEX_HOME {quoted_path}"
         else:  # Unix-like systems
             cmd = f"export CODEX_HOME={quoted_path}"
-        
-        steps_lines.append(f"{step_num}. Set [cyan]CODEX_HOME[/cyan] environment variable before running Codex: [cyan]{cmd}[/cyan]")
+
+        steps_lines.append(f"{step_num}. 在运行 Codex 前设置 [cyan]CODEX_HOME[/cyan] 环境变量：[cyan]{cmd}[/cyan]")
         step_num += 1
 
-    steps_lines.append(f"{step_num}. Start using slash commands with your AI agent:")
+    steps_lines.append(f"{step_num}. 开始使用你的 AI 智能体的斜杠命令：")
 
-    steps_lines.append("   2.1 [cyan]/speckit.constitution[/] - Establish project principles")
-    steps_lines.append("   2.2 [cyan]/speckit.specify[/] - Create baseline specification")
-    steps_lines.append("   2.3 [cyan]/speckit.plan[/] - Create implementation plan")
-    steps_lines.append("   2.4 [cyan]/speckit.tasks[/] - Generate actionable tasks")
-    steps_lines.append("   2.5 [cyan]/speckit.implement[/] - Execute implementation")
+    steps_lines.append("   2.1 [cyan]/speckit.constitution[/] - 建立项目原则")
+    steps_lines.append("   2.2 [cyan]/speckit.specify[/] - 创建基线规格")
+    steps_lines.append("   2.3 [cyan]/speckit.plan[/] - 创建实施计划")
+    steps_lines.append("   2.4 [cyan]/speckit.tasks[/] - 生成可执行任务")
+    steps_lines.append("   2.5 [cyan]/speckit.implement[/] - 执行实施")
 
-    steps_panel = Panel("\n".join(steps_lines), title="Next Steps", border_style="cyan", padding=(1,2))
+    steps_panel = Panel("\n".join(steps_lines), title="后续步骤", border_style="cyan", padding=(1,2))
     console.print()
     console.print(steps_panel)
 
     enhancement_lines = [
-        "Optional commands that you can use for your specs [bright_black](improve quality & confidence)[/bright_black]",
+        "可用于你的规格的可选命令 [bright_black](提高质量和信心)[/bright_black]",
         "",
-        f"○ [cyan]/speckit.clarify[/] [bright_black](optional)[/bright_black] - Ask structured questions to de-risk ambiguous areas before planning (run before [cyan]/speckit.plan[/] if used)",
-        f"○ [cyan]/speckit.analyze[/] [bright_black](optional)[/bright_black] - Cross-artifact consistency & alignment report (after [cyan]/speckit.tasks[/], before [cyan]/speckit.implement[/])",
-        f"○ [cyan]/speckit.checklist[/] [bright_black](optional)[/bright_black] - Generate quality checklists to validate requirements completeness, clarity, and consistency (after [cyan]/speckit.plan[/])"
+        f"○ [cyan]/speckit.clarify[/] [bright_black](可选)[/bright_black] - 提出结构化问题以在规划前降低模糊领域的风险（如使用，在 [cyan]/speckit.plan[/] 之前运行）",
+        f"○ [cyan]/speckit.analyze[/] [bright_black](可选)[/bright_black] - 跨工件一致性和对齐报告（在 [cyan]/speckit.tasks[/] 之后，[cyan]/speckit.implement[/] 之前）",
+        f"○ [cyan]/speckit.checklist[/] [bright_black](可选)[/bright_black] - 生成质量检查表以验证需求的完整性、清晰度和一致性（在 [cyan]/speckit.plan[/] 之后）"
     ]
-    enhancements_panel = Panel("\n".join(enhancement_lines), title="Enhancement Commands", border_style="cyan", padding=(1,2))
+    enhancements_panel = Panel("\n".join(enhancement_lines), title="增强命令", border_style="cyan", padding=(1,2))
     console.print()
     console.print(enhancements_panel)
 
