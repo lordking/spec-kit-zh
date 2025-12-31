@@ -27,17 +27,17 @@ $ARGUMENTS
 
 基于已收到的功能描述，执行以下操作：
 
-1. **生成短名称（short-name）**（2-4 个词组）用于命名功能分支：
+1. **生成短名称（short-name）**（2-4 个英文单词）用于命名功能分支：
    - 分析功能描述并提取最有意义的关键词
-   - 创建一个由2-4 个词组组成的短名称（short-name），以捕获功能的核心
-   - 尽可能使用动词-名词格式（例如，"添加用户认证"、"修复支付错误"）
+   - 创建一个由2-4 个英文单词组成的短名称（short-name），以捕获功能的核心
+   - 尽可能使用动词-名词格式（例如，"add-user-auth"、"fix-payment-bug"）
    - 保留技术术语和缩写词（OAuth2、API、JWT 等）
    - 保持简洁但描述足以一目了然地理解功能
    - 示例：
-     - "我想添加用户认证" → "用户认证"
-     - "实现API的OAuth2集成" → "集成OAuth2"
-     - "为分析创建仪表板" → "分析仪表板"
-     - "修复支付处理超时错误" → "修复支付超时"
+     - "我想添加用户认证" → "user-auth"
+     - "实现API的OAuth2集成" → "oauth2-api-integration"
+     - "为分析创建仪表板" → "analytics-dashboard"
+     - "修复支付处理超时错误" → "fix-payment-timeout"
 
 2. **在创建新分支前检查现有分支**：
 
@@ -59,8 +59,8 @@ $ARGUMENTS
 
    d. 使用计算的编号和短名称（short-name）运行脚本 `{SCRIPT}`：
       - 传递 `--number N+1` 和 `--short-name "your-short-name"` 以及功能描述
-      - Bash 示例：`{SCRIPT} --json --number 5 --short-name "用户认证"`
-      - PowerShell 示例：`{SCRIPT} -Json -Number 5 -ShortName "用户认证"`
+      - Bash 示例：`{SCRIPT} --json --number 5 --short-name "user-auth" "Add user authentication"`
+      - PowerShell 示例：`{SCRIPT} -Json -Number 5 -ShortName "user-auth" "Add user authentication"`
 
    **重要**：
    - 检查所有三个来源（远程分支、本地分支、规格目录）以找到最高数字

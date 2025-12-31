@@ -10,52 +10,52 @@ i=1
 while [ $i -le $# ]; do
     arg="${!i}"
     case "$arg" in
-        --json)
-            JSON_MODE=true
+        --json) 
+            JSON_MODE=true 
             ;;
         --short-name)
             if [ $((i + 1)) -gt $# ]; then
-                echo '错误: --short-name 需要一个值' >&2
+                echo '错误：--short-name 需要一个值' >&2
                 exit 1
             fi
             i=$((i + 1))
             next_arg="${!i}"
-            # 检查下一个参数是否是另一个选项（以 -- 开头）
+            # Check if the next argument is another option (starts with --)
             if [[ "$next_arg" == --* ]]; then
-                echo '错误: --short-name 需要一个值' >&2
+                echo '错误：--short-name 需要一个值' >&2
                 exit 1
             fi
             SHORT_NAME="$next_arg"
             ;;
         --number)
             if [ $((i + 1)) -gt $# ]; then
-                echo '错误: --number 需要一个值' >&2
+                echo '错误：--number 需要一个值' >&2
                 exit 1
             fi
             i=$((i + 1))
             next_arg="${!i}"
             if [[ "$next_arg" == --* ]]; then
-                echo '错误: --number 需要一个值' >&2
+                echo '错误：--number 需要一个值' >&2
                 exit 1
             fi
             BRANCH_NUMBER="$next_arg"
             ;;
-        --help|-h)
-            echo "用法: $0 [--json] [--short-name <name>] [--number N] <feature_description>"
+        --help|-h) 
+            echo "用法：$0 [--json] [--short-name <name>] [--number N] <feature_description>"
             echo ""
-            echo "选项:"
+            echo "选项："
             echo "  --json              以 JSON 格式输出"
             echo "  --short-name <name> 为分支提供自定义短名称（2-4 个单词）"
             echo "  --number N          手动指定分支号（覆盖自动检测）"
             echo "  --help, -h          显示此帮助信息"
             echo ""
-            echo "示例:"
-            echo "  $0 '添加用户认证系统' --short-name 'user-auth'"
-            echo "  $0 '实现 OAuth2 应用程序接入' --number 5"
+            echo "示例："
+            echo "  $0 '添加用户身份验证系统' --short-name 'user-auth'"
+            echo "  $0 '实现 OAuth2 API 集成' --number 5"
             exit 0
             ;;
-        *)
-            ARGS+=("$arg")
+        *) 
+            ARGS+=("$arg") 
             ;;
     esac
     i=$((i + 1))
@@ -63,11 +63,11 @@ done
 
 FEATURE_DESCRIPTION="${ARGS[*]}"
 if [ -z "$FEATURE_DESCRIPTION" ]; then
-    echo "用法: $0 [--json] [--short-name <name>] [--number N] <feature_description>" >&2
+    echo "用法：$0 [--json] [--short-name <name>] [--number N] <feature_description>" >&2
     exit 1
 fi
 
-# 函数通过搜索现有项目标记来找到仓库根目录
+# 函数：通过搜索现有项目标记来找到仓库根目录
 find_repo_root() {
     local dir="$1"
     while [ "$dir" != "/" ]; do
@@ -80,11 +80,11 @@ find_repo_root() {
     return 1
 }
 
-# 函数从 specs 目录获取最高号码
+# 函数：从 specs 目录获取最高编号
 get_highest_from_specs() {
     local specs_dir="$1"
     local highest=0
-
+    
     if [ -d "$specs_dir" ]; then
         for dir in "$specs_dir"/*; do
             [ -d "$dir" ] || continue
@@ -96,23 +96,23 @@ get_highest_from_specs() {
             fi
         done
     fi
-
+    
     echo "$highest"
 }
 
-# 函数从 git 分支获取最高号码
+# 函数：从 git 分支获取最高编号
 get_highest_from_branches() {
     local highest=0
-
-    # 获取所有分支（本地和远程）
+    
+    # Get all branches (local and remote)
     branches=$(git branch -a 2>/dev/null || echo "")
-
+    
     if [ -n "$branches" ]; then
         while IFS= read -r branch; do
-            # 清理分支名称: 删除前导标记和远程前缀
+            # Clean branch name: remove leading markers and remote prefixes
             clean_branch=$(echo "$branch" | sed 's/^[* ]*//; s|^remotes/[^/]*/||')
-
-            # 如果分支符合 ###-* 模式，提取功能号
+            
+            # 如果分支匹配模式 ###-* 则提取特性号
             if echo "$clean_branch" | grep -q '^[0-9]\{3\}-'; then
                 number=$(echo "$clean_branch" | grep -o '^[0-9]\{3\}' || echo "0")
                 number=$((10#$number))
@@ -122,49 +122,41 @@ get_highest_from_branches() {
             fi
         done <<< "$branches"
     fi
-
+    
     echo "$highest"
 }
 
-# 函数检查现有分支（本地和远程）并返回下一个可用的号码
+# 函数：检查现有分支（本地和远程）并返回下一个可用号
 check_existing_branches() {
     local specs_dir="$1"
 
-    # 获取所有远程以获得最新分支信息（如果没有远程，则忽略错误）
+    # 获取所有远程的最新分支信息（如果没有远程则抑制错误）
     git fetch --all --prune 2>/dev/null || true
 
-    # 从所有分支获取最高号码（不仅是匹配的短名称）
+    # 从所有分支获取最高编号（不仅仅是匹配的短名称）
     local highest_branch=$(get_highest_from_branches)
 
-    # 从所有 specs 获取最高号码（不仅是匹配的短名称）
+    # 从所有 specs 获取最高编号（不仅仅是匹配的短名称）
     local highest_spec=$(get_highest_from_specs "$specs_dir")
 
-    # 取两者中的最大值
+    # 取两者的最大值
     local max_num=$highest_branch
     if [ "$highest_spec" -gt "$max_num" ]; then
         max_num=$highest_spec
     fi
 
-    # 返回下一个号码
+    # 返回下一个号
     echo $((max_num + 1))
 }
 
-# 函数用于清理和格式化分支名称（支持中文和其他 Unicode 字符）
+# 函数：清理和格式化分支名
 clean_branch_name() {
     local name="$1"
-    # 转换为小写并将任何非字母/非数字字符替换为连字符
-    # 使用 LC_ALL=C.UTF-8 确保正确处理 Unicode
-    echo "$name" | LC_ALL=C.UTF-8 awk '{
-        gsub(/[^[:alnum:]]/, "-");  # 将非字母数字字符替换为连字符
-        gsub(/-+/, "-");             # 合并多个连字符
-        gsub(/^-/, "");              # 删除前导连字符
-        gsub(/-$/, "");              # 删除尾随连字符
-        print tolower($0);           # 转换为小写
-    }'
+    echo "$name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//' | sed 's/-$//'
 }
 
-# 解析仓库根目录。优先使用 git 信息（如果可用），但回退到搜索仓库标记，
-# 以便工作流在使用 --no-git 初始化的仓库中仍然可以正常工作。
+# 解析仓库根目录。首选使用 git 信息，但如果不可用则回退到
+# 搜索仓库标记，以便在使用 --no-git 初始化的仓库中工作流仍然有效。
 SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if git rev-parse --show-toplevel >/dev/null 2>&1; then
@@ -173,7 +165,7 @@ if git rev-parse --show-toplevel >/dev/null 2>&1; then
 else
     REPO_ROOT="$(find_repo_root "$SCRIPT_DIR")"
     if [ -z "$REPO_ROOT" ]; then
-        echo "错误: 无法确定仓库根目录。请从仓库内运行此脚本。" >&2
+        echo "错误：无法确定仓库根目录。请从仓库内运行此脚本。" >&2
         exit 1
     fi
     HAS_GIT=false
@@ -184,42 +176,38 @@ cd "$REPO_ROOT"
 SPECS_DIR="$REPO_ROOT/specs"
 mkdir -p "$SPECS_DIR"
 
-# 函数用于生成分支名称，带有停用词过滤和长度过滤（支持中文）
+# 函数：生成分支名称，并进行停用词过滤和长度过滤
 generate_branch_name() {
     local description="$1"
-
-    # 要过滤的常见停用词（英文和中文）
-    local stop_words="i|a|an|the|to|for|of|in|on|at|by|with|from|is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|should|could|can|may|might|must|shall|this|that|these|those|my|your|our|their|want|need|add|get|set|一个|的|在|和|是|我|有|这|了|为|到|与|将|可以"
-
+    
+    # 常见的停用词要过滤掉
+    local stop_words="^(i|a|an|the|to|for|of|in|on|at|by|with|from|is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|should|could|can|may|might|must|shall|this|that|these|those|my|your|our|their|want|need|add|get|set)$"
+    
+    # 转换为小写并分割成单词
+    local clean_name=$(echo "$description" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/ /g')
+    
+    # 过滤单词：移除停用词和少于3个字符的单词（除非它们在原文中是大写首字母缩写）
     local meaningful_words=()
-
-    # 提取单词，使用 Unicode 支持的字符类，并保留原始大小写以便后续判断
-    while IFS= read -r word; do
+    for word in $clean_name; do
         # 跳过空单词
         [ -z "$word" ] && continue
-
-        # 小写化用于停用词匹配（支持 Unicode）
-        local lower_word
-        lower_word=$(printf '%s\n' "$word" | LC_ALL=C.UTF-8 awk '{print tolower($0)}')
-
-        # 如果是停用词则跳过
-        if printf '%s\n' "$lower_word" | LC_ALL=C.UTF-8 awk -v re="^(${stop_words})$" 'tolower($0) ~ re {exit 0} END {exit 1}'; then
-            continue
+        
+        # 保留不是停用词且（长度 >= 3 或是潜在首字母缩写）的单词
+        if ! echo "$word" | grep -qiE "$stop_words"; then
+            if [ ${#word} -ge 3 ]; then
+                meaningful_words+=("$word")
+            elif echo "$description" | grep -q "\b${word^^}\b"; then
+                # 如果短单词在原文中以大写形式出现则保留（可能是首字母缩写）
+                meaningful_words+=("$word")
+            fi
         fi
-
-        # 保留长度 >= 2 的单词；否则仅当原文中出现大写形式（可能是缩写）时保留
-        if [ ${#word} -ge 2 ]; then
-            meaningful_words+=("$word")
-        elif echo "$description" | grep -q "\b${word^^}\b"; then
-            meaningful_words+=("$word")
-        fi
-    done < <(printf '%s\n' "$description" | LC_ALL=C.UTF-8 awk '{ line=$0; gsub(/[^[:alnum:][:space:]]/, " ", line); n=split(line, a, /[[:space:]]+/); for(i=1;i<=n;i++) if(a[i] != "") print a[i]; }')
-
+    done
+    
     # 如果有有意义的单词，使用前 3-4 个
     if [ ${#meaningful_words[@]} -gt 0 ]; then
         local max_words=3
         if [ ${#meaningful_words[@]} -eq 4 ]; then max_words=4; fi
-
+        
         local result=""
         local count=0
         for word in "${meaningful_words[@]}"; do
@@ -228,25 +216,24 @@ generate_branch_name() {
             result="$result$word"
             count=$((count + 1))
         done
-        clean_branch_name "$result"
+        echo "$result"
     else
-        # 如果没有找到有意义的单词，回退到原始逻辑
-        local cleaned
-        cleaned=$(clean_branch_name "$description")
-        printf '%s\n' "$cleaned" | tr '-' '\n' | grep -v '^$' | head -3 | tr '\n' '-' | sed 's/-$//'
+        # 如果未找到有意义的单词，则回退到原始逻辑
+        local cleaned=$(clean_branch_name "$description")
+        echo "$cleaned" | tr '-' '\n' | grep -v '^$' | head -3 | tr '\n' '-' | sed 's/-$//'
     fi
 }
 
-# 生成分支名称
+# 生成分支名
 if [ -n "$SHORT_NAME" ]; then
-    # 使用提供的短名称，只需清理一下
+    # 使用提供的短名称，只需清理它
     BRANCH_SUFFIX=$(clean_branch_name "$SHORT_NAME")
 else
-    # 从描述生成，使用智能过滤
+    # 使用智能过滤从描述生成
     BRANCH_SUFFIX=$(generate_branch_name "$FEATURE_DESCRIPTION")
 fi
 
-# 确定分支号码
+# 确定分支号
 if [ -z "$BRANCH_NUMBER" ]; then
     if [ "$HAS_GIT" = true ]; then
         # 检查远程上的现有分支
@@ -258,35 +245,35 @@ if [ -z "$BRANCH_NUMBER" ]; then
     fi
 fi
 
-# 强制使用十进制解释以防止八进制转换（例如 010 在八进制中为 8，但应该是十进制的 10）
+# 强制使用十进制解释以防止八进制转换（例如，010 在八进制中是 8，但应该是 10）
 FEATURE_NUM=$(printf "%03d" "$((10#$BRANCH_NUMBER))")
 BRANCH_NAME="${FEATURE_NUM}-${BRANCH_SUFFIX}"
 
-# GitHub 强制限制分支名称为 244 字节
-# 验证并在必要时截断
+# GitHub 对分支名称强制执行 244 字节的限制
+# 验证和截断（如果必要）
 MAX_BRANCH_LENGTH=244
 if [ ${#BRANCH_NAME} -gt $MAX_BRANCH_LENGTH ]; then
-    # 计算需要从后缀修剪多少
-    # 考虑：功能号码 (3) + 连字符 (1) = 4 个字符
+    # 计算需要从后缀中修剪多少
+    # 说明：特性号（3）+ 连字符（1）= 4 个字符
     MAX_SUFFIX_LENGTH=$((MAX_BRANCH_LENGTH - 4))
-
+    
     # 如果可能，在单词边界处截断后缀
     TRUNCATED_SUFFIX=$(echo "$BRANCH_SUFFIX" | cut -c1-$MAX_SUFFIX_LENGTH)
-    # 如果截断创建了尾随连字符，则删除它
+    # 如果截断产生了尾部连字符则移除
     TRUNCATED_SUFFIX=$(echo "$TRUNCATED_SUFFIX" | sed 's/-$//')
-
+    
     ORIGINAL_BRANCH_NAME="$BRANCH_NAME"
     BRANCH_NAME="${FEATURE_NUM}-${TRUNCATED_SUFFIX}"
-
-    >&2 echo "[specify] 警告: 分支名称超过了 GitHub 的 244 字节限制"
-    >&2 echo "[specify] 原始: $ORIGINAL_BRANCH_NAME (${#ORIGINAL_BRANCH_NAME} 字节)"
-    >&2 echo "[specify] 截断至: $BRANCH_NAME (${#BRANCH_NAME} 字节)"
+    
+    >&2 echo "[specify] 警告：分支名称超过了 GitHub 的 244 字节限制"
+    >&2 echo "[specify] 原始：$ORIGINAL_BRANCH_NAME (${#ORIGINAL_BRANCH_NAME} 字节)"
+    >&2 echo "[specify] 截断为：$BRANCH_NAME (${#BRANCH_NAME} 字节)"
 fi
 
 if [ "$HAS_GIT" = true ]; then
     git checkout -b "$BRANCH_NAME"
 else
-    >&2 echo "[specify] 警告: 未检测到 Git 仓库；已跳过创建分支 $BRANCH_NAME"
+    >&2 echo "[specify] 警告：未检测到 Git 仓库；跳过了对 $BRANCH_NAME 的分支创建"
 fi
 
 FEATURE_DIR="$SPECS_DIR/$BRANCH_NAME"
@@ -302,8 +289,8 @@ export SPECIFY_FEATURE="$BRANCH_NAME"
 if $JSON_MODE; then
     printf '{"BRANCH_NAME":"%s","SPEC_FILE":"%s","FEATURE_NUM":"%s"}\n' "$BRANCH_NAME" "$SPEC_FILE" "$FEATURE_NUM"
 else
-    echo "BRANCH_NAME: $BRANCH_NAME"
-    echo "SPEC_FILE: $SPEC_FILE"
-    echo "FEATURE_NUM: $FEATURE_NUM"
-    echo "SPECIFY_FEATURE 环境变量已设置为: $BRANCH_NAME"
+    echo "分支名称：$BRANCH_NAME"
+    echo "规格文件：$SPEC_FILE"
+    echo "特性号：$FEATURE_NUM"
+    echo "SPECIFY_FEATURE 环境变量已设置为：$BRANCH_NAME"
 fi
