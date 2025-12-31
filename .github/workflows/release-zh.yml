@@ -1,0 +1,60 @@
+name: 创建汉化版本发布
+# 职责说明：仅针对 i18n/zh 下的所有内容进行打包发布，不参与或修改其他工作流或仓库文件。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "i18n/zh/memory/**"
+      - "i18n/zh/scripts/**"
+      - "i18n/zh/templates/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+jobs:
+  release-zh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: 获取最新中文标签
+        id: get_tag
+        run: |
+          chmod +x .github/workflows/scripts-zh/get-next-version.zh.sh
+          .github/workflows/scripts-zh/get-next-version.zh.sh
+      - name: 检查发布是否已存在
+        id: check_release
+        run: |
+          chmod +x .github/workflows/scripts-zh/check-release-exists.zh.sh
+          .github/workflows/scripts-zh/check-release-exists.zh.sh ${{ steps.get_tag.outputs.new_version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 创建汉化版本发布包
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          chmod +x .github/workflows/scripts-zh/create-release-packages.zh.sh
+          .github/workflows/scripts-zh/create-release-packages.zh.sh ${{ steps.get_tag.outputs.new_version }}
+      - name: 生成发布说明
+        if: steps.check_release.outputs.exists == 'false'
+        id: release_notes_zh
+        run: |
+          chmod +x .github/workflows/scripts-zh/generate-release-notes.zh.sh
+          .github/workflows/scripts-zh/generate-release-notes.zh.sh ${{ steps.get_tag.outputs.new_version }} ${{ steps.get_tag.outputs.latest_tag }}
+      - name: 创建GitHub发布
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          chmod +x .github/workflows/scripts-zh/create-github-release.zh.sh
+          .github/workflows/scripts-zh/create-github-release.zh.sh ${{ steps.get_tag.outputs.new_version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 更新pyproject.toml版本号（仅用于发布产物）
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          chmod +x .github/workflows/scripts-zh/update-version.zh.sh
+          .github/workflows/scripts-zh/update-version.zh.sh ${{ steps.get_tag.outputs.new_version }}
