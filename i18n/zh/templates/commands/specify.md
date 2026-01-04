@@ -59,8 +59,8 @@ $ARGUMENTS
 
    d. 使用计算的编号和短名称（short-name）运行脚本 `{SCRIPT}`：
       - 传递 `--number N+1` 和 `--short-name "your-short-name"` 以及功能描述
-      - Bash 示例：`{SCRIPT} --json --number 5 --short-name "user-auth" "Add user authentication"`
-      - PowerShell 示例：`{SCRIPT} -Json -Number 5 -ShortName "user-auth" "Add user authentication"`
+      - Bash 示例：`{SCRIPT} --json --number 5 --short-name "user-auth" "添加用户认证"`
+      - PowerShell 示例：`{SCRIPT} -Json -Number 5 -ShortName "user-auth" "添加用户认证"`
 
    **重要**：
    - 检查所有三个来源（远程分支、本地分支、规格目录）以找到最高数字
