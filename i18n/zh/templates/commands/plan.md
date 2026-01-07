@@ -26,7 +26,7 @@ $ARGUMENTS
 
 ## 大纲
 
-1. **设置**：从仓库根目录运行 `{SCRIPT}` 并解析JSON以获取FEATURE_SPEC、IMPL_PLAN、SPECS_DIR、BRANCH。对于像"I'm Groot"这样的参数中的单引号使用转义语法，例如 "I'm Groot"转换为'I'\''m Groot'（或者如果可能，也可以使用双引号："I'm Groot"）
+1. **设置**：从仓库根目录运行 `{SCRIPT}` 并解析JSON以获取FEATURE_SPEC、IMPL_PLAN、SPECS_DIR、BRANCH。对于参数中的单引号，如 "I'm Groot"，使用转义语法：例如 'I'\''m Groot'（或者如果可能，也可以使用双引号："I'm Groot"）。
 
 2. **加载上下文**：读取 FEATURE_SPEC 和 `/memory/constitution.md`，加载 IMPL_PLAN 模板（已复制）。
 

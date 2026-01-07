@@ -24,7 +24,7 @@ $ARGUMENTS
 
 ## 大纲
 
-1. **设置**：从仓库根目录运行 `{SCRIPT}` 并解析 FEATURE_DIR 和 AVAILABLE_DOCS 列表。所有路径必须是绝对的。对于参数中的单引号，如 "I'm Groot"，使用转义语法：例如 'I'\''m Groot'（或尽可能使用双引号："I'm Groot"）。
+1. **设置**：从仓库根目录运行 `{SCRIPT}` 并解析 FEATURE_DIR 和 AVAILABLE_DOCS 列表。所有路径必须是绝对的。对于参数中的单引号，如 "I'm Groot"，使用转义语法：例如 'I'\''m Groot'（或者如果可能，也可以使用双引号："I'm Groot"）。
 
 2. **加载设计文档**：从 FEATURE_DIR 读取：
    - **必需**：plan.md（技术堆栈、库、结构）、spec.md（具有优先级的用户故事）
