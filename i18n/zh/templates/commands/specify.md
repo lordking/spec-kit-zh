@@ -69,7 +69,7 @@ $ARGUMENTS
    - 你必须为每个功能只运行一次这个脚本，以避免分支命名冲突
    - JSON 以终端输出的形式提供 - 始终参考它以获取你正在寻找的真实内容
    - JSON 输出将包含 BRANCH_NAME 和 SPEC_FILE 路径
-   - 对于参数中的单引号，如 "I'm Groot"，使用转义语法：例如 'I'\''m Groot'（或者如果可能，也可以使用双引号："I'm Groot"）。
+   - 对于参数中的单引号，如 "I'm Groot"，使用转义语法：例如 'I'\''m Groot'（尽可能使用双引号："I'm Groot"）。
 
 3. 加载 `templates/spec-template.md` 以了解所需章节。
 
