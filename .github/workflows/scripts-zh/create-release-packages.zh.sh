@@ -4,7 +4,7 @@ set -euo pipefail
 # create-release-packages.zh.sh (workflow-local)
 # 为每个支持的 AI 助手与脚本类型构建 Spec Kit 模板发布归档（中文本地化）。
 # 用法: .github/workflows/scripts/create-release-packages.zh.sh <版本>
-#   版本参数需包含前缀 'v'。
+#   版本参数需包含前缀 'zh-v' 与中文累积次数（例：zh-v1.2.3.1）。
 #   可选地通过环境变量 AGENTS 与/或 SCRIPTS 限定构建子集：
 #     AGENTS  : 以空格或逗号分隔的代理子集（默认：全部）：claude gemini copilot cursor-agent qwen opencode windsurf codex kilocode auggie roo codebuddy amp q bob qoder
 #     SCRIPTS : 以空格或逗号分隔的脚本类型（默认：两者）：可选值：sh ps
@@ -14,12 +14,12 @@ set -euo pipefail
 #     SCRIPTS=ps $0 v0.2.0
 
 if [[ $# -ne 1 ]]; then
-  echo "用法: $0 <version-with-zh-v-prefix>" >&2
+  echo "用法: $0 <version-with-zh-v-prefix-and-count> (如 zh-v1.2.3.1)" >&2
   exit 1
 fi
 NEW_VERSION="$1"
-if [[ ! $NEW_VERSION =~ ^zh-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "版本必须看起来像 zh-v0.0.0" >&2
+if [[ ! $NEW_VERSION =~ ^zh-v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "版本必须看起来像 zh-v0.0.0.1（第四段为中文累积次数）" >&2
   exit 1
 fi
 
