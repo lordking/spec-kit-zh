@@ -3,18 +3,18 @@ set -euo pipefail
 
 # generate-release-notes.zh.sh
 # 从 git 历史生成中文发布说明
-# 用法: generate-release-notes.zh.sh <新版本> <上一个标签>
+# 用法: generate-release-notes.zh.sh <新版本> <上一个英文标签>
 
 if [[ $# -ne 2 ]]; then
-  echo "用法: $0 <新版本> <上一个标签>" >&2
+  echo "用法: $0 <新版本> <上一个英文标签>" >&2
   exit 1
 fi
 
 NEW_VERSION="$1"
 LAST_TAG="$2"
 
-# 获取自上一个标签以来的提交记录
-if [ "$LAST_TAG" = "zh-v0.0.0" ]; then
+# 获取自上一个英文标签以来的提交记录
+if [ "$LAST_TAG" = "v0.0.0" ]; then
   # 检查提交数量并以此为限制
   COMMIT_COUNT=$(git rev-list --count HEAD)
   if [ "$COMMIT_COUNT" -gt 10 ]; then

@@ -6,7 +6,7 @@ set -euo pipefail
 # 用法: create-github-release.zh.sh <version>
 
 if [[ $# -ne 1 ]]; then
-  echo "用法: $0 <version> (例如 zh-v0.0.7)" >&2
+  echo "用法: $0 <version> (例如 zh-v0.0.7.1)" >&2
   exit 1
 fi
 
