@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # 为功能设置实现计划
 
 [CmdletBinding()]

@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # 通用 PowerShell 函数（类似于 common.sh）
 
 function Get-RepoRoot {
