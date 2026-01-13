@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 <#!
 .SYNOPSIS
 用计划文件的信息更新代理上下文文件（PowerShell 版本）

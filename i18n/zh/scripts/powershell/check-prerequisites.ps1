@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 
 # 统一的先决条件检查脚本 (PowerShell)
 #
