@@ -13,7 +13,7 @@ $ErrorActionPreference = 'Stop'
 
 # 如果请求，显示帮助
 if ($Help) {
-    Write-Host "用法: ./create-new-feature.ps1 [-Json] [-ShortName <name>] [-Number N] <feature description>"
+    Write-Host "用法: ./create-new-feature.ps1 [-Json] -ShortName <name> [-Number N] <feature description>"
     Write-Host ""
     Write-Host "选项:"
     Write-Host "  -Json               以 JSON 格式输出"
@@ -22,14 +22,20 @@ if ($Help) {
     Write-Host "  -Help               显示此帮助信息"
     Write-Host ""
     Write-Host "示例:"
-    Write-Host "  ./create-new-feature.ps1 'Add user authentication system' -ShortName 'user-auth'"
-    Write-Host "  ./create-new-feature.ps1 'Implement OAuth2 integration for API'"
+    Write-Host "  ./create-new-feature.ps1 -ShortName 'user-auth' '添加用户认证系统'"
+    Write-Host "  ./create-new-feature.ps1 -ShortName 'oauth2-api' -Number 5 '实现 OAuth2 API 集成'"
     exit 0
 }
 
-# 检查是否提供了特性描述
+# 检查是否提供了功能描述
 if (-not $FeatureDescription -or $FeatureDescription.Count -eq 0) {
-    Write-Error "用法: ./create-new-feature.ps1 [-Json] [-ShortName <name>] <feature description>"
+    Write-Error "用法: ./create-new-feature.ps1 [-Json] -ShortName <name> <feature description>"
+    exit 1
+}
+
+# 检查是否提供了短名称
+if (-not $ShortName -or $ShortName.Trim().Length -eq 0) {
+    Write-Error "错误：-ShortName 为必填"
     exit 1
 }
 
@@ -151,59 +157,8 @@ Set-Location $repoRoot
 $specsDir = Join-Path $repoRoot 'specs'
 New-Item -ItemType Directory -Path $specsDir -Force | Out-Null
 
-# 通过停用词过滤和长度过滤生成分支名
-function Get-BranchName {
-    param([string]$Description)
-    
-    # 常见的停用词要过滤掉
-    $stopWords = @(
-        'i', 'a', 'an', 'the', 'to', 'for', 'of', 'in', 'on', 'at', 'by', 'with', 'from',
-        'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had',
-        'do', 'does', 'did', 'will', 'would', 'should', 'could', 'can', 'may', 'might', 'must', 'shall',
-        'this', 'that', 'these', 'those', 'my', 'your', 'our', 'their',
-        'want', 'need', 'add', 'get', 'set'
-    )
-    
-    # 转换为小写并提取单词（仅字母数字）
-    $cleanName = $Description.ToLower() -replace '[^a-z0-9\s]', ' '
-    $words = $cleanName -split '\s+' | Where-Object { $_ }
-    
-    # 过滤单词：移除停用词和少于 3 个字符的单词（除非它们是原文中的大写首字母缩写）
-    $meaningfulWords = @()
-    foreach ($word in $words) {
-        # 跳过停用词
-        if ($stopWords -contains $word) { continue }
-        
-        # 保留长度 >= 3 或在原文中以大写出现的单词（可能是首字母缩写）
-        if ($word.Length -ge 3) {
-            $meaningfulWords += $word
-        } elseif ($Description -match "\b$($word.ToUpper())\b") {
-            # 如果短单词在原文中以大写形式出现则保留（可能是首字母缩写）
-            $meaningfulWords += $word
-        }
-    }
-    
-    # 如果有有意义的单词，使用前 3-4 个
-    if ($meaningfulWords.Count -gt 0) {
-        $maxWords = if ($meaningfulWords.Count -eq 4) { 4 } else { 3 }
-        $result = ($meaningfulWords | Select-Object -First $maxWords) -join '-'
-        return $result
-    } else {
-        # 如果未找到有意义的单词则回退到原始逻辑
-        $result = ConvertTo-CleanBranchName -Name $Description
-        $fallbackWords = ($result -split '-') | Where-Object { $_ } | Select-Object -First 3
-        return [string]::Join('-', $fallbackWords)
-    }
-}
-
-# 生成分支名
-if ($ShortName) {
-    # 使用提供的短名称，只需清理它
-    $branchSuffix = ConvertTo-CleanBranchName -Name $ShortName
-} else {
-    # 使用智能过滤从描述生成
-    $branchSuffix = Get-BranchName -Description $featureDesc
-}
+# 生成分支名（短名称必填）
+$branchSuffix = ConvertTo-CleanBranchName -Name $ShortName
 
 # 确定分支号
 if ($Number -eq 0) {

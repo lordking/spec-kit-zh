@@ -41,7 +41,7 @@ while [ $i -le $# ]; do
             BRANCH_NUMBER="$next_arg"
             ;;
         --help|-h) 
-            echo "用法：$0 [--json] [--short-name <name>] [--number N] <feature_description>"
+            echo "用法：$0 [--json] --short-name <name> [--number N] <feature_description>"
             echo ""
             echo "选项："
             echo "  --json              以 JSON 格式输出"
@@ -50,8 +50,8 @@ while [ $i -le $# ]; do
             echo "  --help, -h          显示此帮助信息"
             echo ""
             echo "示例："
-            echo "  $0 '添加用户身份验证系统' --short-name 'user-auth'"
-            echo "  $0 '实现 OAuth2 API 集成' --number 5"
+            echo "  $0 --short-name 'user-auth' '添加用户身份验证系统'"
+            echo "  $0 --short-name 'oauth2-api' --number 5 '实现 OAuth2 API 集成'"
             exit 0
             ;;
         *) 
@@ -61,9 +61,16 @@ while [ $i -le $# ]; do
     i=$((i + 1))
 done
 
+# 检查是否提供了功能描述
 FEATURE_DESCRIPTION="${ARGS[*]}"
 if [ -z "$FEATURE_DESCRIPTION" ]; then
-    echo "用法：$0 [--json] [--short-name <name>] [--number N] <feature_description>" >&2
+    echo "用法：$0 [--json] --short-name <name> [--number N] <feature_description>" >&2
+    exit 1
+fi
+
+# 检查是否提供了短名称  
+if [ -z "$SHORT_NAME" ]; then
+    echo "错误：--short-name 为必填" >&2
     exit 1
 fi
 
@@ -176,62 +183,8 @@ cd "$REPO_ROOT"
 SPECS_DIR="$REPO_ROOT/specs"
 mkdir -p "$SPECS_DIR"
 
-# 函数：生成分支名称，并进行停用词过滤和长度过滤
-generate_branch_name() {
-    local description="$1"
-    
-    # 常见的停用词要过滤掉
-    local stop_words="^(i|a|an|the|to|for|of|in|on|at|by|with|from|is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|should|could|can|may|might|must|shall|this|that|these|those|my|your|our|their|want|need|add|get|set)$"
-    
-    # 转换为小写并分割成单词
-    local clean_name=$(echo "$description" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/ /g')
-    
-    # 过滤单词：移除停用词和少于3个字符的单词（除非它们在原文中是大写首字母缩写）
-    local meaningful_words=()
-    for word in $clean_name; do
-        # 跳过空单词
-        [ -z "$word" ] && continue
-        
-        # 保留不是停用词且（长度 >= 3 或是潜在首字母缩写）的单词
-        if ! echo "$word" | grep -qiE "$stop_words"; then
-            if [ ${#word} -ge 3 ]; then
-                meaningful_words+=("$word")
-            elif echo "$description" | grep -q "\b${word^^}\b"; then
-                # 如果短单词在原文中以大写形式出现则保留（可能是首字母缩写）
-                meaningful_words+=("$word")
-            fi
-        fi
-    done
-    
-    # 如果有有意义的单词，使用前 3-4 个
-    if [ ${#meaningful_words[@]} -gt 0 ]; then
-        local max_words=3
-        if [ ${#meaningful_words[@]} -eq 4 ]; then max_words=4; fi
-        
-        local result=""
-        local count=0
-        for word in "${meaningful_words[@]}"; do
-            if [ $count -ge $max_words ]; then break; fi
-            if [ -n "$result" ]; then result="$result-"; fi
-            result="$result$word"
-            count=$((count + 1))
-        done
-        echo "$result"
-    else
-        # 如果未找到有意义的单词，则回退到原始逻辑
-        local cleaned=$(clean_branch_name "$description")
-        echo "$cleaned" | tr '-' '\n' | grep -v '^$' | head -3 | tr '\n' '-' | sed 's/-$//'
-    fi
-}
-
-# 生成分支名
-if [ -n "$SHORT_NAME" ]; then
-    # 使用提供的短名称，只需清理它
-    BRANCH_SUFFIX=$(clean_branch_name "$SHORT_NAME")
-else
-    # 使用智能过滤从描述生成
-    BRANCH_SUFFIX=$(generate_branch_name "$FEATURE_DESCRIPTION")
-fi
+# 生成分支名（短名称必填）
+BRANCH_SUFFIX=$(clean_branch_name "$SHORT_NAME")
 
 # 确定分支号
 if [ -z "$BRANCH_NUMBER" ]; then
