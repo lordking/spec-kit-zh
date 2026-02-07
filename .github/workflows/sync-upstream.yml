@@ -172,11 +172,31 @@ jobs:
               fi
             fi
             echo "merge_status=success" >> $GITHUB_ENV
-            git push origin main
           else
             echo "merge_status=conflict" >> $GITHUB_ENV
             git merge --abort
           fi
+
+      - name: 同步上游 README.md 为 README.en.md
+        if: steps.check_changes.outputs.has_changes == 'true' && env.merge_status == 'success'
+        run: |
+          # 从上游获取 README.md 并保存为 README.en.md
+          git show upstream/main:README.md > README.en.md
+          
+          # 如果有变更，提交
+          if ! git diff --quiet README.en.md 2>/dev/null || [ ! -f README.en.md ]; then
+            git add README.en.md
+            git commit -m "sync: 更新英文 README (来自上游)"
+            echo "readme_synced=true" >> $GITHUB_ENV
+          else
+            echo "readme_synced=false" >> $GITHUB_ENV
+            echo "README.en.md 无变更"
+          fi
+
+      - name: 推送变更到远程仓库
+        if: steps.check_changes.outputs.has_changes == 'true' && env.merge_status == 'success'
+        run: |
+          git push origin main
 
       - name: 同步上游标签
         run: |
