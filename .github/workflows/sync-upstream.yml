@@ -178,6 +178,23 @@ jobs:
             git merge --abort
           fi
 
+      - name: 同步上游 README 为英文版本
+        if: steps.check_changes.outputs.has_changes == 'true' && env.merge_status == 'success'
+        run: |
+          # 从上游获取 README.md 并保存为 README.en.md
+          if git show upstream/main:README.md > README.en.md 2>/dev/null; then
+            echo "✅ 成功同步上游 README.md 到 README.en.md"
+            git add README.en.md
+            if ! git diff --cached --quiet; then
+              git commit -m "docs: 同步上游 README.md 为 README.en.md"
+              git push origin main
+            else
+              echo "ℹ️  README.en.md 无变更"
+            fi
+          else
+            echo "⚠️  警告: 无法从上游获取 README.md"
+          fi
+
       - name: 同步上游标签
         run: |
           # 推送从上游获取的标签到远程仓库
