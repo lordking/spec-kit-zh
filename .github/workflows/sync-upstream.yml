@@ -147,12 +147,14 @@ jobs:
       - name: 合并上游变更
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
-          # 尝试合并 upstream 的变更
-          # 首先获取共同的祖先提交
-          MERGE_BASE=$(git merge-base HEAD upstream/main)
+          UPSTREAM_COMMIT="${{ steps.check_changes.outputs.upstream_commit }}"
+          BRANCH="upstream-sync-${UPSTREAM_COMMIT}"
 
-          # 合并上游变更
-          if git merge $MERGE_BASE upstream/main --no-edit --strategy=recursive --strategy-option=theirs; then
+          # 创建同步分支（避免直接推送到受保护的 main 分支）
+          git checkout -b "$BRANCH"
+
+          # 使用 squash 合并上游变更（不创建合并提交，避免违反分支保护规则）
+          if git merge --squash --strategy=recursive --strategy-option=theirs upstream/main; then
             # 恢复 .syncignore 中列出的所有本地文件
             if [ -f .github/.syncignore ]; then
               echo "恢复忽略清单中的本地文件..."
@@ -160,22 +162,30 @@ jobs:
                 # 跳过注释和空行
                 [[ "$pattern" =~ ^#.*$ ]] && continue
                 [[ -z "$pattern" ]] && continue
-                
-                # 恢复匹配模式的文件
+
+                # 取消暂存上游新增但应被忽略的文件（例如新增的 workflow 文件）
+                git diff --name-only --cached --diff-filter=A -- "$pattern" 2>/dev/null | \
+                  xargs -r git rm --cached -f -- 2>/dev/null || true
+
+                # 恢复被上游修改或删除的本地文件到 HEAD 版本
                 git checkout HEAD -- "$pattern" 2>/dev/null || true
-                git add "$pattern" 2>/dev/null || true
               done < .github/.syncignore
-              
-              # 如果有变更，修正合并提交
-              if ! git diff --cached --quiet; then
-                git commit --amend --no-edit
-              fi
             fi
-            echo "merge_status=success" >> $GITHUB_ENV
-            git push origin main
+
+            if git diff --cached --quiet; then
+              echo "merge_status=no_changes" >> $GITHUB_ENV
+              echo "同步忽略清单过滤后无实际变更，跳过提交"
+            else
+              git commit -m "chore: sync upstream changes (${UPSTREAM_COMMIT})"
+              git push --set-upstream origin "$BRANCH"
+              echo "merge_status=success" >> $GITHUB_ENV
+            fi
           else
+            # 理论上 --strategy-option=theirs 不应产生冲突，此处仅作安全兜底
+            # 清理 squash merge 在工作区留下的残留变更
+            git checkout -- . 2>/dev/null || true
+            git clean -fd 2>/dev/null || true
             echo "merge_status=conflict" >> $GITHUB_ENV
-            git merge --abort
           fi
 
       - name: 同步上游标签
@@ -184,30 +194,21 @@ jobs:
           # --tags 会推送所有不在远程仓库的标签
           git push origin --tags || echo "标签同步失败，但继续执行"
 
-      - name: 创建冲突处理分支
-        if: steps.check_changes.outputs.has_changes == 'true' && env.merge_status == 'conflict'
-        run: |
-          BRANCH="upstream-sync-${{ steps.check_changes.outputs.upstream_commit }}"
-          git checkout -b "$BRANCH"
-          # 重新尝试以便生成冲突状态到分支（不推送失败合并）
-          set +e
-          git merge upstream/main --no-edit
-          set -e
-          git push --set-upstream origin "$BRANCH"
-
       - name: 创建拉取请求
-        if: steps.check_changes.outputs.has_changes == 'true' && env.merge_status == 'conflict'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: upstream-sync-${{ steps.check_changes.outputs.upstream_commit }}
-          title: "⬆️ 同步上游变更（存在冲突）: ${{ steps.check_changes.outputs.upstream_commit }}"
-          body: |
-            自动创建的冲突处理分支，请在 PR 中解决与 upstream/main 的冲突。
-
-            - 运行详情：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            - 上游提交：${{ steps.check_changes.outputs.upstream_commit }}
-          labels: upstream-sync, merge-conflict
+        if: steps.check_changes.outputs.has_changes == 'true' && env.merge_status == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UPSTREAM_COMMIT: ${{ steps.check_changes.outputs.upstream_commit }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          BRANCH="upstream-sync-${UPSTREAM_COMMIT}"
+          PR_BODY="$(printf '自动同步自上游仓库 [github/spec-kit](https://github.com/github/spec-kit) 的变更。\n\n- 上游提交：%s\n- 运行详情：%s' "${UPSTREAM_COMMIT}" "${RUN_URL}")"
+          gh pr create \
+            --title "⬆️ 同步上游变更: ${UPSTREAM_COMMIT}" \
+            --body "${PR_BODY}" \
+            --base main \
+            --head "$BRANCH" \
+            --label "upstream-sync" || echo "PR 已存在或创建失败，跳过"
 
       - name: 渲染汉化待办 issue 模板
         id: render_localization_issue
@@ -215,7 +216,7 @@ jobs:
         env:
           UPSTREAM_COMMIT: ${{ steps.check_changes.outputs.upstream_commit }}
           CURRENT_COMMIT: ${{ steps.check_changes.outputs.current_commit }}
-          MERGE_STATUS: ${{ env.merge_status == 'success' && '✅ 成功' || '⚠️ 冲突（需要手动处理）' }}
+          MERGE_STATUS: ${{ env.merge_status == 'success' && '✅ 成功' || (env.merge_status == 'no_changes' && '✅ 成功（无需提交）') || '⚠️ 冲突（需要手动处理）' }}
           UPDATED_AT: ${{ github.event.repository.updated_at }}
           STATS: ${{ steps.check_changes.outputs.stats }}
           CHANGED_FILES: ${{ steps.check_changes.outputs.changed_files }}

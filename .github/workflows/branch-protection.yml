@@ -25,13 +25,13 @@ jobs:
           
           # 检查是否是合并到main分支
           if [ "$TARGET_BRANCH" = "main" ]; then
-            # 只允许从i18n-zh分支合并到main
-            if [ "$SOURCE_BRANCH" != "i18n-zh" ]; then
-              echo "::error::不允许从 $SOURCE_BRANCH 分支直接合并到 main 分支。只能从 i18n-zh 分支合并到 main。"
+            # 只允许从i18n-zh分支或upstream-sync-*分支合并到main
+            if [ "$SOURCE_BRANCH" != "i18n-zh" ] && [[ "$SOURCE_BRANCH" != upstream-sync-* ]]; then
+              echo "::error::不允许从 $SOURCE_BRANCH 分支直接合并到 main 分支。只能从 i18n-zh 或 upstream-sync-* 分支合并到 main。"
               echo "allowed=false" >> $GITHUB_OUTPUT
               exit 1
             else
-              echo "::notice::允许从 i18n-zh 合并到 main"
+              echo "::notice::允许从 $SOURCE_BRANCH 合并到 main"
               echo "allowed=true" >> $GITHUB_OUTPUT
             fi
           fi
@@ -45,5 +45,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '❌ **分支保护规则违规**\n\n此仓库只允许从 `i18n-zh` 分支合并到 `main` 分支。\n\n**请按照以下步骤操作：**\n\n1. 先将您的更改合并到 `i18n-zh` 分支\n2. 然后从 `i18n-zh` 创建PR到 `main` 分支\n\n**正确的工作流程：**\n```\n您的分支 → i18n-zh → main\n```\n\n有关详细信息，请参阅 [分支保护文档](.github/BRANCH_PROTECTION.md)。'
+              body: '❌ **分支保护规则违规**\n\n此仓库只允许从 `i18n-zh` 或 `upstream-sync-*` 分支合并到 `main` 分支。\n\n**请按照以下步骤操作：**\n\n1. 先将您的更改合并到 `i18n-zh` 分支\n2. 然后从 `i18n-zh` 创建PR到 `main` 分支\n\n**正确的工作流程：**\n```\n您的分支 → i18n-zh → main\n```\n\n有关详细信息，请参阅 [分支保护文档](.github/BRANCH_PROTECTION.md)。'
             })
