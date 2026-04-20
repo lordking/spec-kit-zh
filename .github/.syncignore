@@ -10,3 +10,6 @@ i18n/
 
 # GitHub 工作流（避免同步上游的 CI/CD 配置）
 .github/workflows/
+
+# 中文版 README（上游的 README.md 将自动同步为 README.en.md）
+README.md
