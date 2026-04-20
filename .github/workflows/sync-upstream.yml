@@ -4,7 +4,7 @@ on:
   schedule:
     # 每天 UTC 时间 00:00 运行（北京时间 08:00）
     - cron: "0 0 * * *"
-  workflow_dispatch: # 允许手动触发
+  workflow_dispatch:
     inputs:
       target_branch:
         description: "目标分支"
@@ -45,7 +45,6 @@ jobs:
         id: read_syncignore
         run: |
           if [ -f .github/.syncignore ]; then
-            # 读取忽略清单，过滤掉注释和空行
             IGNORE_PATTERNS=$(grep -v '^#' .github/.syncignore | grep -v '^$' | tr '\n' '|' | sed 's/|$//')
             echo "patterns=$IGNORE_PATTERNS" >> $GITHUB_OUTPUT
             echo "has_patterns=true" >> $GITHUB_OUTPUT
@@ -58,12 +57,9 @@ jobs:
       - name: 检查上游变更
         id: check_changes
         run: |
-          # 获取当前的 HEAD commit
           CURRENT_COMMIT=$(git rev-parse HEAD)
           echo "current_commit=$CURRENT_COMMIT" >> $GITHUB_OUTPUT
 
-          # 检查是否有上游的新提交需要合并
-          # 使用 merge-base 找到共同祖先，然后检查上游是否有新提交
           MERGE_BASE=$(git merge-base HEAD upstream/main)
           UPSTREAM_COMMIT=$(git rev-parse upstream/main)
           echo "upstream_commit=$UPSTREAM_COMMIT" >> $GITHUB_OUTPUT
@@ -74,19 +70,15 @@ jobs:
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
 
-            # 构建 git 排除路径参数
             EXCLUDE_ARGS=""
             if [ "${{ steps.read_syncignore.outputs.has_patterns }}" = "true" ]; then
-              # 从 .syncignore 读取模式并转换为 git pathspec 排除参数
               while IFS= read -r pattern; do
-                # 跳过注释和空行
                 [[ "$pattern" =~ ^#.*$ ]] && continue
                 [[ -z "$pattern" ]] && continue
                 EXCLUDE_ARGS="$EXCLUDE_ARGS ':!${pattern}'"
               done < .github/.syncignore
             fi
 
-            # 获取上游新提交的变更文件列表（应用忽略清单）
             ALL_CHANGED=$(git diff --name-only $MERGE_BASE upstream/main)
             if [ "${{ steps.read_syncignore.outputs.has_patterns }}" = "true" ]; then
               IGNORE_PATTERN="${{ steps.read_syncignore.outputs.patterns }}"
@@ -98,7 +90,6 @@ jobs:
             echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
 
-            # 获取变更统计（应用忽略清单）
             if [ -n "$EXCLUDE_ARGS" ]; then
               STATS=$(eval git diff --stat $MERGE_BASE upstream/main -- . $EXCLUDE_ARGS)
             else
@@ -117,7 +108,6 @@ jobs:
           mkdir -p sync-report
           git log --oneline --decorate --graph --left-right --cherry-pick --no-merges HEAD...upstream/main > sync-report/commits.txt
 
-          # 构建 git 排除路径参数
           EXCLUDE_ARGS=""
           if [ -f .github/.syncignore ]; then
             while IFS= read -r pattern; do
@@ -127,7 +117,6 @@ jobs:
             done < .github/.syncignore
           fi
 
-          # 生成差异报告（应用忽略清单）
           if [ -n "$EXCLUDE_ARGS" ]; then
             eval git diff HEAD upstream/main -- . $EXCLUDE_ARGS > sync-report/full.diff
             eval git diff --name-status HEAD upstream/main -- . $EXCLUDE_ARGS > sync-report/changed-files.txt
@@ -144,70 +133,61 @@ jobs:
           name: upstream-sync-report
           path: sync-report
 
-      - name: 合并上游变更
+      - name: 合并上游变更到同步分支
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
-          # 尝试合并 upstream 的变更
-          # 首先获取共同的祖先提交
           MERGE_BASE=$(git merge-base HEAD upstream/main)
+          BRANCH="upstream-sync-${{ steps.check_changes.outputs.upstream_commit }}"
 
-          # 合并上游变更
+          git checkout -b "$BRANCH"
+
           if git merge $MERGE_BASE upstream/main --no-edit --strategy=recursive --strategy-option=theirs; then
-            # 恢复 .syncignore 中列出的所有本地文件
+            # 将上游 README.md 另存为 README.en.md（合并后此时内容为上游版本）
+            if [ -f README.md ]; then
+              echo "将上游 README.md 复制到 README.en.md..."
+              cp README.md README.en.md
+              git add README.en.md
+            fi
+
             if [ -f .github/.syncignore ]; then
               echo "恢复忽略清单中的本地文件..."
               while IFS= read -r pattern; do
-                # 跳过注释和空行
                 [[ "$pattern" =~ ^#.*$ ]] && continue
                 [[ -z "$pattern" ]] && continue
-                
-                # 恢复匹配模式的文件
+
                 git checkout HEAD -- "$pattern" 2>/dev/null || true
                 git add "$pattern" 2>/dev/null || true
               done < .github/.syncignore
-              
-              # 如果有变更，修正合并提交
+
               if ! git diff --cached --quiet; then
                 git commit --amend --no-edit
               fi
             fi
+
             echo "merge_status=success" >> $GITHUB_ENV
-            git push origin main
+            git push --set-upstream origin "$BRANCH"
           else
             echo "merge_status=conflict" >> $GITHUB_ENV
-            git merge --abort
+            git merge --abort || true
+            git push --set-upstream origin "$BRANCH" || true
           fi
 
-      - name: 同步上游标签
-        run: |
-          # 推送从上游获取的标签到远程仓库
-          # --tags 会推送所有不在远程仓库的标签
-          git push origin --tags || echo "标签同步失败，但继续执行"
-
-      - name: 创建冲突处理分支
-        if: steps.check_changes.outputs.has_changes == 'true' && env.merge_status == 'conflict'
-        run: |
-          BRANCH="upstream-sync-${{ steps.check_changes.outputs.upstream_commit }}"
-          git checkout -b "$BRANCH"
-          # 重新尝试以便生成冲突状态到分支（不推送失败合并）
-          set +e
-          git merge upstream/main --no-edit
-          set -e
-          git push --set-upstream origin "$BRANCH"
-
-      - name: 创建拉取请求
-        if: steps.check_changes.outputs.has_changes == 'true' && env.merge_status == 'conflict'
+      - name: 创建同步拉取请求
+        if: steps.check_changes.outputs.has_changes == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: upstream-sync-${{ steps.check_changes.outputs.upstream_commit }}
-          title: "⬆️ 同步上游变更（存在冲突）: ${{ steps.check_changes.outputs.upstream_commit }}"
+          base: main
+          title: "⬆️ 同步上游变更: ${{ steps.check_changes.outputs.upstream_commit }}"
           body: |
-            自动创建的冲突处理分支，请在 PR 中解决与 upstream/main 的冲突。
+            自动同步上游变更。
 
             - 运行详情：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
             - 上游提交：${{ steps.check_changes.outputs.upstream_commit }}
-          labels: upstream-sync, merge-conflict
+            - 同步状态：${{ env.merge_status == 'success' && '成功' || '存在冲突' }}
+          labels: upstream-sync
+          reviewers: ${{ github.repository_owner }}
 
       - name: 渲染汉化待办 issue 模板
         id: render_localization_issue
